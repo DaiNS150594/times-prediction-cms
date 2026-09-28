@@ -134,6 +134,19 @@ export default function Admin() {
     );
   }
 
+  async function deleteEvent(id: string, title: string) {
+    if (!confirm(`Xóa sự kiện "${title}"? Toàn bộ dự đoán của sự kiện này cũng sẽ bị xóa.`)) return;
+
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) {
+      alert('Không thể xóa sự kiện: ' + error.message);
+      return;
+    }
+
+    setExpandedHistoryIds((current) => current.filter((item) => item !== id));
+    load();
+  }
+
   async function closeEvent(id: string) {
     const v = prompt('Nhập kết quả thực tế:');
     if (v === null) return;
@@ -338,6 +351,7 @@ export default function Admin() {
                 <th>Trạng thái</th>
                 <th>Kết quả</th>
                 <th>Dự đoán</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -387,6 +401,15 @@ export default function Admin() {
                           })}
                       </div>
                     )}
+                  </td>
+                  <td>
+                    <button
+                      className="btn danger compact"
+                      type="button"
+                      onClick={() => deleteEvent(e.id, e.title)}
+                    >
+                      Xóa
+                    </button>
                   </td>
                 </tr>
               ))}
