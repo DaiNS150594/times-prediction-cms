@@ -149,7 +149,6 @@ export default function Home() {
             <thead>
               <tr>
                 <th>Sự kiện</th>
-                <th>Ngày</th>
                 <th>Kết quả</th>
                 <th>Chi tiết</th>
               </tr>
@@ -159,8 +158,12 @@ export default function Home() {
                 .filter((e) => e.status === 'closed')
                 .map((e) => (
                   <tr key={e.id}>
-                    <td>{e.title}</td>
-                    <td>{e.event_date ? new Date(e.event_date).toLocaleString('vi-VN') : '—'}</td>
+                    <td>
+                      <div className="history-event-title">{e.title}</div>
+                      <div className="history-event-date">
+                        {e.event_date ? new Date(e.event_date).toLocaleDateString('vi-VN') : '—'}
+                      </div>
+                    </td>
                     <td>
                       <b>{e.actual_result ?? '—'}</b>
                     </td>
@@ -172,7 +175,6 @@ export default function Home() {
                         aria-expanded={expandedHistoryIds.includes(e.id)}
                       >
                         <span>{expandedHistoryIds.includes(e.id) ? 'Thu gọn' : 'Xem dự đoán'}</span>
-                        <span className="history-toggle-icon">⌄</span>
                       </button>
 
                       {expandedHistoryIds.includes(e.id) && (
