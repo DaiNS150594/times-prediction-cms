@@ -342,11 +342,26 @@ export default function Admin() {
                   </td>
                   <td>{e.actual_result ?? '—'}</td>
                   <td>
-                    {preds.filter((p) => p.event_id === e.id).map((p) => (
-                      <div key={p.id}>
-                        {p.users?.nickname || p.users?.name}: {p.prediction}
-                      </div>
-                    ))}
+                    {preds
+                      .filter((p) => p.event_id === e.id)
+                      .sort((a, b) => Number(a.prediction) - Number(b.prediction))
+                      .map((p) => {
+                        const isWinner =
+                          e.actual_result != null && Number(p.prediction) === Number(e.actual_result);
+
+                        return (
+                          <div
+                            className={'history-prediction-row ' + (isWinner ? 'winner' : '')}
+                            key={p.id}
+                          >
+                            <span className="history-player">
+                              {isWinner && <span className="winner-crown">🏆</span>}
+                              {p.users?.nickname || p.users?.name}
+                            </span>
+                            <span className="history-prediction-number">{p.prediction}</span>
+                          </div>
+                        );
+                      })}
                   </td>
                 </tr>
               ))}
