@@ -343,7 +343,12 @@ export default function Admin() {
             <tbody>
               {events.map((e) => (
                 <tr key={e.id}>
-                  <td>{e.title}</td>
+                  <td>
+                    <div className="history-event-title">{e.title}</div>
+                    <div className="history-event-date">
+                      {e.event_date ? new Date(e.event_date).toLocaleDateString('vi-VN') : '—'}
+                    </div>
+                  </td>
                   <td>
                     <span className="badge">{e.status}</span>
                   </td>
@@ -356,7 +361,6 @@ export default function Admin() {
                       aria-expanded={expandedHistoryIds.includes(e.id)}
                     >
                       <span>{expandedHistoryIds.includes(e.id) ? 'Thu gọn' : 'Xem dự đoán'}</span>
-                      <span className="history-toggle-icon">⌄</span>
                     </button>
 
                     {expandedHistoryIds.includes(e.id) && (
