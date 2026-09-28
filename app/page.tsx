@@ -9,6 +9,7 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
+  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -37,6 +38,15 @@ export default function Home() {
 
   const active = events.find((e) => e.status === 'active');
   const current = active ? preds.filter((p) => p.event_id === active.id) : [];
+  const sortedCurrent = [...current].sort((a, b) => {
+    if (predictionSort === 'number') {
+      return Number(a.prediction) - Number(b.prediction);
+    }
+
+    const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
+    const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
+    return nameA.localeCompare(nameB, 'vi');
+  });
 
   return (
     <main className="wrap">
@@ -67,8 +77,33 @@ export default function Home() {
         <section className="panel">
           <h2 className="section-title">{active?.title || 'Chưa có sự kiện đang mở'}</h2>
           {active?.event_date && <p className="muted">Thời gian: {new Date(active.event_date).toLocaleString('vi-VN')}</p>}
+          <div className="prediction-toolbar public-sort-toolbar">
+            <div className="sort-meta">
+              <div className="sort-title">Sắp xếp bảng dự đoán</div>
+              <div className="sort-subtitle">{current.length} người tham gia</div>
+            </div>
+            <div className="sort-toggle" role="group" aria-label="Sắp xếp bảng dự đoán">
+              <button
+                className={'sort-btn ' + (predictionSort === 'name' ? 'active' : '')}
+                type="button"
+                onClick={() => setPredictionSort('name')}
+              >
+                <span className="sort-icon">A–Z</span>
+                <span>Theo tên</span>
+              </button>
+              <button
+                className={'sort-btn ' + (predictionSort === 'number' ? 'active' : '')}
+                type="button"
+                onClick={() => setPredictionSort('number')}
+              >
+                <span className="sort-icon">1–9</span>
+                <span>Theo số dự đoán</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid">
-            {current.map((p) => (
+            {sortedCurrent.map((p) => (
               <div className="card person" key={p.id}>
                 <img className="avatar" src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} />
                 <div>
