@@ -19,6 +19,8 @@ export default function Admin() {
   const [date, setDate] = useState('');
   const [selected, setSelected] = useState('');
   const [number, setNumber] = useState('');
+  const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
+  const [editingPredictionValue, setEditingPredictionValue] = useState('');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -96,6 +98,25 @@ export default function Admin() {
     load();
   }
 
+  async function updatePrediction(id: string) {
+    if (editingPredictionValue.trim() === '') return;
+    const value = Number(editingPredictionValue);
+    if (Number.isNaN(value)) {
+      alert('Vui lòng nhập một con số hợp lệ.');
+      return;
+    }
+
+    const { error } = await supabase.from('predictions').update({ prediction: value }).eq('id', id);
+    if (error) {
+      alert('Không thể cập nhật dự đoán: ' + error.message);
+      return;
+    }
+
+    setEditingPredictionId(null);
+    setEditingPredictionValue('');
+    load();
+  }
+
   async function closeEvent(id: string) {
     const v = prompt('Nhập kết quả thực tế:');
     if (v === null) return;
@@ -161,13 +182,61 @@ export default function Admin() {
 
               <div className="grid" style={{ marginTop: 18 }}>
                 {activePreds.map((p) => (
-                  <div className="card person" key={p.id}>
+                  <div className="card person prediction-card" key={p.id}>
                     <img className="avatar" src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} />
-                    <div>
+                    <div className="prediction-user">
                       <b>{p.users?.name}</b>
                       <div className="muted">{p.users?.nickname}</div>
                     </div>
-                    <div className="number">{p.prediction}</div>
+
+                    {editingPredictionId === p.id ? (
+                      <div className="prediction-edit">
+                        <input
+                          className="input prediction-input"
+                          type="number"
+                          step="any"
+                          autoFocus
+                          value={editingPredictionValue}
+                          onChange={(e) => setEditingPredictionValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') updatePrediction(p.id);
+                            if (e.key === 'Escape') {
+                              setEditingPredictionId(null);
+                              setEditingPredictionValue('');
+                            }
+                          }}
+                        />
+                        <div className="prediction-actions">
+                          <button className="btn compact" type="button" onClick={() => updatePrediction(p.id)}>
+                            Lưu
+                          </button>
+                          <button
+                            className="btn ghost compact"
+                            type="button"
+                            onClick={() => {
+                              setEditingPredictionId(null);
+                              setEditingPredictionValue('');
+                            }}
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="prediction-value-wrap">
+                        <div className="number">{p.prediction}</div>
+                        <button
+                          className="btn edit-btn compact"
+                          type="button"
+                          onClick={() => {
+                            setEditingPredictionId(p.id);
+                            setEditingPredictionValue(String(p.prediction));
+                          }}
+                        >
+                          Sửa
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
