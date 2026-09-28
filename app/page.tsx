@@ -10,6 +10,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
+  const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -47,6 +48,12 @@ export default function Home() {
     const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
     return nameA.localeCompare(nameB, 'vi');
   });
+
+  function toggleHistory(id: string) {
+    setExpandedHistoryIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  }
 
   return (
     <main className="wrap">
@@ -158,26 +165,40 @@ export default function Home() {
                       <b>{e.actual_result ?? '—'}</b>
                     </td>
                     <td>
-                      {preds
-                        .filter((p) => p.event_id === e.id)
-                        .sort((a, b) => Number(a.prediction) - Number(b.prediction))
-                        .map((p) => {
-                          const isWinner =
-                            e.actual_result != null && Number(p.prediction) === Number(e.actual_result);
+                      <button
+                        className={'history-toggle ' + (expandedHistoryIds.includes(e.id) ? 'expanded' : '')}
+                        type="button"
+                        onClick={() => toggleHistory(e.id)}
+                        aria-expanded={expandedHistoryIds.includes(e.id)}
+                      >
+                        <span>{expandedHistoryIds.includes(e.id) ? 'Thu gọn' : 'Xem dự đoán'}</span>
+                        <span className="history-toggle-icon">⌄</span>
+                      </button>
 
-                          return (
-                            <div
-                              className={'history-prediction-row ' + (isWinner ? 'winner' : '')}
-                              key={p.id}
-                            >
-                              <span className="history-player">
-                                {isWinner && <span className="winner-crown">🏆</span>}
-                                {p.users?.nickname || p.users?.name}
-                              </span>
-                              <span className="history-prediction-number">{p.prediction}</span>
-                            </div>
-                          );
-                        })}
+                      {expandedHistoryIds.includes(e.id) && (
+                        <div className="history-details">
+                          {preds
+                            .filter((p) => p.event_id === e.id)
+                            .sort((a, b) => Number(a.prediction) - Number(b.prediction))
+                            .map((p) => {
+                              const isWinner =
+                                e.actual_result != null && Number(p.prediction) === Number(e.actual_result);
+
+                              return (
+                                <div
+                                  className={'history-prediction-row ' + (isWinner ? 'winner' : '')}
+                                  key={p.id}
+                                >
+                                  <span className="history-player">
+                                    {isWinner && <span className="winner-crown">🏆</span>}
+                                    {p.users?.nickname || p.users?.name}
+                                  </span>
+                                  <span className="history-prediction-number">{p.prediction}</span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
