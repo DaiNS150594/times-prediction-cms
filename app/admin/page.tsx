@@ -21,6 +21,7 @@ export default function Admin() {
   const [number, setNumber] = useState('');
   const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
   const [editingPredictionValue, setEditingPredictionValue] = useState('');
+  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -68,6 +69,15 @@ export default function Admin() {
 
   const active = events.find((e) => e.status === 'active');
   const activePreds = active ? preds.filter((p) => p.event_id === active.id) : [];
+  const sortedActivePreds = [...activePreds].sort((a, b) => {
+    if (predictionSort === 'number') {
+      return Number(a.prediction) - Number(b.prediction);
+    }
+
+    const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
+    const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
+    return nameA.localeCompare(nameB, 'vi');
+  });
 
   async function addUser(e: any) {
     e.preventDefault();
@@ -180,8 +190,28 @@ export default function Admin() {
                 <button className="btn">Lưu / cập nhật dự đoán</button>
               </form>
 
+              <div className="prediction-toolbar">
+                <span className="muted">Sắp xếp theo:</span>
+                <div className="sort-toggle">
+                  <button
+                    className={'sort-btn ' + (predictionSort === 'name' ? 'active' : '')}
+                    type="button"
+                    onClick={() => setPredictionSort('name')}
+                  >
+                    Tên
+                  </button>
+                  <button
+                    className={'sort-btn ' + (predictionSort === 'number' ? 'active' : '')}
+                    type="button"
+                    onClick={() => setPredictionSort('number')}
+                  >
+                    Số dự đoán
+                  </button>
+                </div>
+              </div>
+
               <div className="grid" style={{ marginTop: 18 }}>
-                {activePreds.map((p) => (
+                {sortedActivePreds.map((p) => (
                   <div className="card person prediction-card" key={p.id}>
                     <img className="avatar" src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} />
                     <div className="prediction-user">
