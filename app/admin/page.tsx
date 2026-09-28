@@ -191,21 +191,26 @@ export default function Admin() {
               </form>
 
               <div className="prediction-toolbar">
-                <span className="muted">Sắp xếp theo:</span>
-                <div className="sort-toggle">
+                <div className="sort-meta">
+                  <div className="sort-title">Sắp xếp bảng dự đoán</div>
+                  <div className="sort-subtitle">{activePreds.length} người tham gia</div>
+                </div>
+                <div className="sort-toggle" role="group" aria-label="Sắp xếp bảng dự đoán">
                   <button
                     className={'sort-btn ' + (predictionSort === 'name' ? 'active' : '')}
                     type="button"
                     onClick={() => setPredictionSort('name')}
                   >
-                    Tên
+                    <span className="sort-icon">A–Z</span>
+                    <span>Theo tên</span>
                   </button>
                   <button
                     className={'sort-btn ' + (predictionSort === 'number' ? 'active' : '')}
                     type="button"
                     onClick={() => setPredictionSort('number')}
                   >
-                    Số dự đoán
+                    <span className="sort-icon">1–9</span>
+                    <span>Theo số dự đoán</span>
                   </button>
                 </div>
               </div>
