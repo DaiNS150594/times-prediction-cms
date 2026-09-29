@@ -505,18 +505,34 @@ body:after{
   .prediction-name-copy b{font-size:13px}
   .prediction-name-copy span{font-size:11px}
   .prediction-number-pill{min-width:42px;font-size:21px;padding:4px 7px}
-  .prediction-number-list{gap:5px}
-  .prediction-number-row{
-    min-height:48px;
-    grid-template-columns:48px minmax(0,1fr);
-    gap:8px;
-    padding:6px 8px;
-    border-radius:12px;
+  .prediction-number-list{
+    gap:0;
+    border-top:1px solid rgba(171,207,232,.16);
   }
-  .prediction-number-label{width:40px;height:34px;font-size:18px;border-radius:10px}
-  .prediction-number-avatar{width:32px;height:32px}
+  .prediction-number-row{
+    min-height:38px;
+    grid-template-columns:42px minmax(0,1fr);
+    gap:6px;
+    padding:4px 2px;
+    border:0;
+    border-bottom:1px solid rgba(171,207,232,.16);
+    border-radius:0;
+    background:transparent;
+  }
+  .prediction-number-label{
+    width:34px;
+    height:30px;
+    font-size:16px;
+    border-radius:9px;
+    box-shadow:0 5px 12px rgba(255,75,48,.12);
+  }
+  .prediction-number-avatar{
+    width:28px;
+    height:28px;
+    border-width:1.5px;
+  }
   .prediction-number-count{display:none}
-  .prediction-number-avatars{gap:5px}
+  .prediction-number-avatars{gap:4px}
 }
 
 /* Admin prediction CRUD */
