@@ -17,10 +17,7 @@ export default function Admin() {
   const [avatar, setAvatar] = useState('');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [selected, setSelected] = useState('');
-  const [number, setNumber] = useState('');
-  const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
-  const [editingPredictionValue, setEditingPredictionValue] = useState('');
+  const [resultNumber, setResultNumber] = useState('');
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -140,34 +137,9 @@ export default function Admin() {
     load();
   }
 
-  async function addPred(e: any) {
-    e.preventDefault();
-    if (!active || !selected || number === '') return;
-    await supabase.from('predictions').upsert(
-      { event_id: active.id, user_id: selected, prediction: Number(number) },
-      { onConflict: 'event_id,user_id' }
-    );
-    setNumber('');
-    load();
-  }
-
-  async function updatePrediction(id: string) {
-    if (editingPredictionValue.trim() === '') return;
-    const value = Number(editingPredictionValue);
-    if (Number.isNaN(value)) {
-      alert('Vui lòng nhập một con số hợp lệ.');
-      return;
-    }
-
-    const { error } = await supabase.from('predictions').update({ prediction: value }).eq('id', id);
-    if (error) {
-      alert('Không thể cập nhật dự đoán: ' + error.message);
-      return;
-    }
-
-    setEditingPredictionId(null);
-    setEditingPredictionValue('');
-    load();
+  function formatTwoDigits(value: number | string | null | undefined) {
+    if (value === null || value === undefined || value === '') return '—';
+    return String(Number(value)).padStart(2, '0');
   }
 
   function toggleHistory(id: string) {
@@ -190,9 +162,24 @@ export default function Admin() {
   }
 
   async function closeEvent(id: string) {
-    const v = prompt('Nhập kết quả thực tế:');
-    if (v === null) return;
-    await supabase.from('events').update({ actual_result: Number(v), status: 'closed' }).eq('id', id);
+    if (!/^\d{2}$/.test(resultNumber)) {
+      alert('Kết quả phải gồm đúng 2 chữ số, từ 00 đến 99.');
+      return;
+    }
+
+    if (!confirm(`Chốt kết quả ${resultNumber}? Sau khi chốt, sự kiện sẽ chuyển vào lịch sử.`)) return;
+
+    const { error } = await supabase
+      .from('events')
+      .update({ actual_result: Number(resultNumber), status: 'closed' })
+      .eq('id', id);
+
+    if (error) {
+      alert('Không thể chốt kết quả: ' + error.message);
+      return;
+    }
+
+    setResultNumber('');
     load();
   }
 
@@ -232,25 +219,37 @@ export default function Admin() {
           )}
           {active && (
             <>
-              <form className="form two" onSubmit={addPred}>
-                <select className="input" value={selected} onChange={(e) => setSelected(e.target.value)} required>
-                  <option value="">Chọn người</option>
-                  {users.map((u) => (
-                    <option value={u.id} key={u.id}>
-                      {u.name} ({u.nickname})
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="input"
-                  type="number"
-                  step="any"
-                  placeholder="Con số dự đoán"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value)}
-                />
-                <button className="btn">Lưu / cập nhật dự đoán</button>
-              </form>
+              <div className="admin-event-status">
+                <div>
+                  <div className="admin-event-status-title">Người chơi tự nhập dự đoán</div>
+                  <div className="muted">Admin không cần nhập hộ. Hệ thống khóa mỗi người sau lần gửi đầu tiên.</div>
+                </div>
+                <div className="prediction-progress admin-progress">
+                  <b>{activePreds.length}</b>/<span>{users.length}</span> đã dự đoán
+                </div>
+              </div>
+
+              <div className="result-entry-box">
+                <div>
+                  <div className="result-entry-title">Kết quả trúng giải</div>
+                  <div className="muted">Khi có kết quả, nhập đúng 2 chữ số và chốt sự kiện.</div>
+                </div>
+                <div className="result-entry-controls">
+                  <input
+                    className="input two-digit-input admin-result-input"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={2}
+                    pattern="\d{2}"
+                    placeholder="00–99"
+                    value={resultNumber}
+                    onChange={(e) => setResultNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                  />
+                  <button className="btn result-submit-btn" type="button" onClick={() => closeEvent(active.id)}>
+                    Chốt kết quả
+                  </button>
+                </div>
+              </div>
 
               <div className="prediction-toolbar">
                 <div className="sort-meta">
@@ -285,64 +284,10 @@ export default function Admin() {
                       <b>{p.users?.name}</b>
                       <div className="muted">{p.users?.nickname}</div>
                     </div>
-
-                    {editingPredictionId === p.id ? (
-                      <div className="prediction-edit">
-                        <input
-                          className="input prediction-input"
-                          type="number"
-                          step="any"
-                          autoFocus
-                          value={editingPredictionValue}
-                          onChange={(e) => setEditingPredictionValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') updatePrediction(p.id);
-                            if (e.key === 'Escape') {
-                              setEditingPredictionId(null);
-                              setEditingPredictionValue('');
-                            }
-                          }}
-                        />
-                        <div className="prediction-actions">
-                          <button className="btn compact" type="button" onClick={() => updatePrediction(p.id)}>
-                            Lưu
-                          </button>
-                          <button
-                            className="btn ghost compact"
-                            type="button"
-                            onClick={() => {
-                              setEditingPredictionId(null);
-                              setEditingPredictionValue('');
-                            }}
-                          >
-                            Hủy
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="prediction-value-wrap">
-                        <div className="number">{p.prediction}</div>
-                        <button
-                          className="btn edit-btn compact"
-                          type="button"
-                          onClick={() => {
-                            setEditingPredictionId(p.id);
-                            setEditingPredictionValue(String(p.prediction));
-                          }}
-                        >
-                          Sửa
-                        </button>
-                      </div>
-                    )}
+                    <div className="number">{formatTwoDigits(p.prediction)}</div>
                   </div>
                 ))}
               </div>
-
-              <p>
-                <button className="btn danger" onClick={() => closeEvent(active.id)}>
-                  Chốt kết quả & lưu lịch sử
-                </button>
-              </p>
             </>
           )}
         </section>
@@ -453,7 +398,7 @@ export default function Admin() {
                   <td>
                     <span className="badge">{e.status}</span>
                   </td>
-                  <td>{e.actual_result ?? '—'}</td>
+                  <td>{formatTwoDigits(e.actual_result)}</td>
                   <td>
                     <button
                       className={'history-toggle ' + (expandedHistoryIds.includes(e.id) ? 'expanded' : '')}
@@ -482,7 +427,7 @@ export default function Admin() {
                                   {isWinner && <span className="winner-crown">🏆</span>}
                                   {p.users?.nickname || p.users?.name}
                                 </span>
-                                <span className="history-prediction-number">{p.prediction}</span>
+                                <span className="history-prediction-number">{formatTwoDigits(p.prediction)}</span>
                               </div>
                             );
                           })}
