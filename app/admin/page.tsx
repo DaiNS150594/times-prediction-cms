@@ -15,6 +15,7 @@ export default function Admin() {
   const [name, setName] = useState('');
   const [nick, setNick] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [pin, setPin] = useState('');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [resultNumber, setResultNumber] = useState('');
@@ -24,6 +25,7 @@ export default function Admin() {
   const [editUserName, setEditUserName] = useState('');
   const [editUserNick, setEditUserNick] = useState('');
   const [editUserAvatar, setEditUserAvatar] = useState('');
+  const [editUserPin, setEditUserPin] = useState('');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -83,10 +85,28 @@ export default function Admin() {
 
   async function addUser(e: any) {
     e.preventDefault();
-    await supabase.from('users').insert({ name, nickname: nick || null, avatar_url: avatar || null });
+
+    if (!/^\d{4}$/.test(pin)) {
+      alert('PIN phải gồm đúng 4 chữ số.');
+      return;
+    }
+
+    const { error } = await supabase.from('users').insert({
+      name: name.trim(),
+      nickname: nick.trim() || null,
+      avatar_url: avatar.trim() || null,
+      pin_code: pin,
+    });
+
+    if (error) {
+      alert('Không thể thêm người tham gia: ' + error.message);
+      return;
+    }
+
     setName('');
     setNick('');
     setAvatar('');
+    setPin('');
     load();
   }
 
@@ -95,6 +115,7 @@ export default function Admin() {
     setEditUserName(user.name || '');
     setEditUserNick(user.nickname || '');
     setEditUserAvatar(user.avatar_url || '');
+    setEditUserPin(user.pin_code || '');
   }
 
   function cancelEditUser() {
@@ -102,11 +123,17 @@ export default function Admin() {
     setEditUserName('');
     setEditUserNick('');
     setEditUserAvatar('');
+    setEditUserPin('');
   }
 
   async function updateUser(id: string) {
     if (!editUserName.trim()) {
       alert('Tên người tham gia không được để trống.');
+      return;
+    }
+
+    if (!/^\d{4}$/.test(editUserPin)) {
+      alert('PIN phải gồm đúng 4 chữ số.');
       return;
     }
 
@@ -116,6 +143,7 @@ export default function Admin() {
         name: editUserName.trim(),
         nickname: editUserNick.trim() || null,
         avatar_url: editUserAvatar.trim() || null,
+        pin_code: editUserPin,
       })
       .eq('id', id);
 
@@ -300,6 +328,17 @@ export default function Admin() {
             <input className="input" required placeholder="Tên" value={name} onChange={(e) => setName(e.target.value)} />
             <input className="input" placeholder="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} />
             <input className="input" placeholder="URL avatar" value={avatar} onChange={(e) => setAvatar(e.target.value)} />
+            <input
+              className="input pin-admin-input"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              pattern="\d{4}"
+              placeholder="PIN 4 số"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              required
+            />
             <button className="btn">Thêm user</button>
           </form>
           <div className="grid" style={{ marginTop: 18 }}>
@@ -331,6 +370,16 @@ export default function Admin() {
                         value={editUserAvatar}
                         onChange={(e) => setEditUserAvatar(e.target.value)}
                       />
+                      <input
+                        className="input pin-admin-input"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        pattern="\d{4}"
+                        placeholder="PIN 4 số"
+                        value={editUserPin}
+                        onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      />
                     </div>
                     <div className="user-card-actions editing-actions">
                       <button className="btn compact" type="button" onClick={() => updateUser(u.id)}>
@@ -347,6 +396,9 @@ export default function Admin() {
                     <div className="user-card-info">
                       <b>{u.name}</b>
                       <div className="muted">{u.nickname}</div>
+                      <div className={'user-pin-badge ' + (u.pin_code ? '' : 'missing')}>
+                        {u.pin_code ? 'PIN: ' + u.pin_code : 'Chưa có PIN'}
+                      </div>
                     </div>
                     <div className="user-card-actions">
                       <button className="btn edit-btn compact" type="button" onClick={() => startEditUser(u)}>
