@@ -196,7 +196,9 @@ body:after{
 .notice{padding:10px 12px;background:rgba(255,96,49,.10);border:1px solid rgba(255,114,56,.20);border-radius:12px;color:#ffd2bd}
 .prediction-toolbar{
   display:flex;justify-content:space-between;align-items:center;gap:16px;
-  margin-top:22px;padding:14px 16px;border-radius:18px;flex-wrap:wrap;
+  margin-top:22px;
+  margin-bottom:20px;
+  padding:14px 16px;border-radius:18px;flex-wrap:wrap;
 }
 .sort-meta{display:flex;flex-direction:column;gap:3px}
 .sort-title{font-weight:800;color:#eef6fb;font-size:15px;letter-spacing:.01em}
