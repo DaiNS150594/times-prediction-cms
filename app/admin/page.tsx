@@ -341,7 +341,7 @@ export default function Admin() {
             />
             <button className="btn">Thêm user</button>
           </form>
-          <div className="grid" style={{ marginTop: 18 }}>
+          <div className="grid user-grid" style={{ marginTop: 18 }}>
             {users.map((u) => (
               <div className={'card person user-card ' + (editingUserId === u.id ? 'editing' : '')} key={u.id}>
                 {editingUserId === u.id ? (
@@ -351,71 +351,75 @@ export default function Admin() {
                       src={editUserAvatar || '/avatar.svg'}
                       alt={editUserName || u.name}
                     />
-                    <div className="user-edit-form">
-                      <input
-                        className="input"
-                        placeholder="Tên"
-                        value={editUserName}
-                        onChange={(e) => setEditUserName(e.target.value)}
-                      />
-                      <input
-                        className="input"
-                        placeholder="Nickname"
-                        value={editUserNick}
-                        onChange={(e) => setEditUserNick(e.target.value)}
-                      />
-                      <input
-                        className="input"
-                        placeholder="URL avatar"
-                        value={editUserAvatar}
-                        onChange={(e) => setEditUserAvatar(e.target.value)}
-                      />
-                      <input
-                        className="input pin-admin-input"
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={4}
-                        pattern="\d{4}"
-                        placeholder="PIN 4 số"
-                        value={editUserPin}
-                        onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                      />
-                    </div>
-                    <div className="user-card-actions editing-actions">
-                      <button className="btn compact" type="button" onClick={() => updateUser(u.id)}>
-                        Lưu
-                      </button>
-                      <button className="btn ghost compact" type="button" onClick={cancelEditUser}>
-                        Hủy
-                      </button>
+                    <div className="user-card-body">
+                      <div className="user-edit-form">
+                        <input
+                          className="input"
+                          placeholder="Tên"
+                          value={editUserName}
+                          onChange={(e) => setEditUserName(e.target.value)}
+                        />
+                        <input
+                          className="input"
+                          placeholder="Nickname"
+                          value={editUserNick}
+                          onChange={(e) => setEditUserNick(e.target.value)}
+                        />
+                        <input
+                          className="input"
+                          placeholder="URL avatar"
+                          value={editUserAvatar}
+                          onChange={(e) => setEditUserAvatar(e.target.value)}
+                        />
+                        <input
+                          className="input pin-admin-input"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={4}
+                          pattern="\d{4}"
+                          placeholder="PIN 4 số"
+                          value={editUserPin}
+                          onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        />
+                      </div>
+                      <div className="user-card-actions editing-actions">
+                        <button className="btn compact" type="button" onClick={() => updateUser(u.id)}>
+                          Lưu
+                        </button>
+                        <button className="btn ghost compact" type="button" onClick={cancelEditUser}>
+                          Hủy
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
                     <img className="avatar" src={u.avatar_url || '/avatar.svg'} alt={u.name} />
-                    <div className="user-card-info">
-                      <b>{u.name}</b>
-                      <div className="muted">{u.nickname}</div>
-                      <div className={'user-pin-badge ' + (u.pin_code ? '' : 'missing')}>
-                        {u.pin_code ? 'PIN: ' + u.pin_code : 'Chưa có PIN'}
+                    <div className="user-card-body">
+                      <div className="user-card-info">
+                        <b className="user-name">{u.name}</b>
+                        <div className="muted user-nickname">{u.nickname || '—'}</div>
+                        <div className={'user-pin-badge ' + (u.pin_code ? '' : 'missing')}>
+                          {u.pin_code ? 'PIN ' + u.pin_code : 'Chưa có PIN'}
+                        </div>
                       </div>
-                    </div>
-                    <div className="user-card-actions">
-                      <button className="btn edit-btn compact" type="button" onClick={() => startEditUser(u)}>
-                        Sửa
-                      </button>
-                      <button
-                        className="btn danger compact"
-                        type="button"
-                        onClick={async () => {
-                          if (confirm('Xóa user?')) {
-                            await supabase.from('users').delete().eq('id', u.id);
-                            load();
-                          }
-                        }}
-                      >
-                        Xóa
-                      </button>
+                      <div className="user-card-actions">
+                        <button className="btn edit-btn compact" type="button" onClick={() => startEditUser(u)}>
+                          Sửa
+                        </button>
+                        <button
+                          className="btn danger compact"
+                          type="button"
+                          onClick={async () => {
+                            if (confirm('Xóa user?')) {
+                              await supabase.from('users').delete().eq('id', u.id);
+                              load();
+                            }
+                          }}
+                        >
+                          Xóa
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
