@@ -1,4 +1,10 @@
 import './globals.css';
+import { Open_Sans } from 'next/font/google';
+
+const openSans = Open_Sans({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+});
 
 export const metadata = {
   title: 'FAM - TIMES',
@@ -8,7 +14,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body>
+      <body className={openSans.className}>
         <div className="bg-shell" aria-hidden="true">
           <video
             className="site-bg-video"
