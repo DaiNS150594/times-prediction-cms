@@ -330,3 +330,69 @@ body:after{
   .hero{padding-top:20px}
   .hero h1{letter-spacing:.03em}
 }
+
+.winner-popup-backdrop{
+  position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;
+  background:rgba(1,10,18,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  overflow:hidden;
+}
+.winner-popup{
+  position:relative;z-index:3;width:min(92vw,520px);padding:30px 28px 26px;text-align:center;
+  border:1px solid rgba(214,234,248,.42);border-radius:28px;
+  background:linear-gradient(145deg,rgba(13,43,66,.88),rgba(5,20,34,.82));
+  box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(20px) saturate(130%);
+  -webkit-backdrop-filter:blur(20px) saturate(130%);
+  animation:winnerPopupIn .52s cubic-bezier(.16,1,.3,1);
+}
+.winner-popup:before{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,rgba(255,255,255,.48),rgba(255,58,72,.35),rgba(255,139,34,.48),rgba(120,183,226,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+}
+.winner-popup-close{
+  position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.14);background:rgba(4,18,30,.45);color:#dce8ef;
+  font-size:22px;line-height:1;cursor:pointer;
+}
+.winner-trophy{font-size:58px;filter:drop-shadow(0 10px 22px rgba(255,140,37,.35));animation:trophyBounce 1.2s ease-in-out infinite alternate}
+.winner-kicker{margin-top:4px;font-size:11px;letter-spacing:.18em;font-weight:800;color:#ff9d62}
+.winner-popup h2{margin:8px 0 6px;font-size:clamp(26px,4vw,38px);line-height:1.08}
+.winner-event-name{color:#a9bbc8;font-size:14px}
+.winner-result{display:inline-flex;align-items:center;gap:12px;margin:18px auto 10px;padding:9px 15px;border-radius:14px;background:rgba(255,94,47,.12);border:1px solid rgba(255,116,62,.24)}
+.winner-result span{color:#aabac7;font-size:13px}.winner-result strong{font-size:30px;color:#ff9a3d}
+.winner-list{display:grid;gap:10px;margin:12px 0 18px}
+.winner-person{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(185,218,241,.14)}
+.winner-person div{display:flex;flex-direction:column;gap:2px}.winner-person b{font-size:17px}.winner-person span{font-size:13px;color:#96aaba}
+.winner-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #ff7b37;box-shadow:0 0 0 4px rgba(255,111,48,.08)}
+.winner-popup-button{width:100%}
+.winner-celebration{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.confetti-piece{
+  --x:50vw;--y:-10vh;--r:0deg;--s:1;
+  position:absolute;left:var(--x);top:var(--y);width:10px;height:18px;border-radius:3px;
+  background:linear-gradient(180deg,#ff174f,#ff8a23);
+  box-shadow:0 0 14px rgba(255,83,51,.22);
+  transform:translate(-50%,-50%) rotate(var(--r)) scale(var(--s));
+  animation:confettiFall 2.7s linear infinite;
+}
+.confetti-piece:nth-child(3n){background:linear-gradient(180deg,#7bdcff,#48a7ff)}
+.confetti-piece:nth-child(4n){background:linear-gradient(180deg,#fff0a1,#ffb42a)}
+.confetti-piece:nth-child(5n){background:linear-gradient(180deg,#ff7ad9,#ff3f83)}
+.confetti-1{--x:8vw;animation-delay:-.2s}.confetti-2{--x:15vw;animation-delay:-1.1s;--s:1.2}.confetti-3{--x:23vw;animation-delay:-2s}
+.confetti-4{--x:31vw;animation-delay:-.7s;--s:.8}.confetti-5{--x:39vw;animation-delay:-1.6s}.confetti-6{--x:47vw;animation-delay:-2.3s;--s:1.3}
+.confetti-7{--x:55vw;animation-delay:-.4s}.confetti-8{--x:63vw;animation-delay:-1.3s;--s:.85}.confetti-9{--x:71vw;animation-delay:-2.1s}
+.confetti-10{--x:79vw;animation-delay:-.9s;--s:1.25}.confetti-11{--x:87vw;animation-delay:-1.8s}.confetti-12{--x:94vw;animation-delay:-2.5s}
+.confetti-13{--x:12vw;animation-delay:-2.35s;--s:.8}.confetti-14{--x:20vw;animation-delay:-.55s}.confetti-15{--x:28vw;animation-delay:-1.4s;--s:1.3}
+.confetti-16{--x:36vw;animation-delay:-2.2s}.confetti-17{--x:52vw;animation-delay:-.85s}.confetti-18{--x:60vw;animation-delay:-1.75s;--s:.75}
+.confetti-19{--x:68vw;animation-delay:-2.6s}.confetti-20{--x:76vw;animation-delay:-.35s;--s:1.2}.confetti-21{--x:84vw;animation-delay:-1.2s}
+.confetti-22{--x:91vw;animation-delay:-2.05s}.confetti-23{--x:43vw;animation-delay:-1.95s;--s:.9}.confetti-24{--x:58vw;animation-delay:-.1s;--s:1.15}
+@keyframes winnerPopupIn{0%{opacity:0;transform:scale(.72) translateY(24px)}70%{opacity:1;transform:scale(1.04) translateY(-4px)}100%{transform:scale(1) translateY(0)}}
+@keyframes trophyBounce{from{transform:scale(.96) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}
+@keyframes confettiFall{
+  0%{transform:translate(-50%,-120px) rotate(0deg) scale(var(--s));opacity:0}
+  10%{opacity:1}
+  100%{transform:translate(-50%,115vh) rotate(760deg) scale(var(--s));opacity:.95}
+}
