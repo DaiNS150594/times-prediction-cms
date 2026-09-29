@@ -610,3 +610,27 @@ body:after{
   .admin-prediction-editor-actions{width:100%}
   .admin-prediction-editor-actions .btn{flex:1}
 }
+
+.admin-event-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:8px;
+}
+.admin-event-title{margin-bottom:0}
+.admin-event-title-edit{flex:0 0 auto;margin-top:1px}
+.admin-event-title-editor{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:8px;
+  align-items:center;
+  margin-bottom:12px;
+}
+@media(max-width:650px){
+  .admin-event-heading{align-items:stretch;flex-direction:column}
+  .admin-event-title-edit{align-self:flex-start}
+  .admin-event-title-editor{grid-template-columns:1fr 1fr}
+  .admin-event-title-editor .input{grid-column:1/-1}
+}
