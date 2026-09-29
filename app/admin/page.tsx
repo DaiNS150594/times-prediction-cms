@@ -26,6 +26,10 @@ export default function Admin() {
   const [editUserNick, setEditUserNick] = useState('');
   const [editUserAvatar, setEditUserAvatar] = useState('');
   const [editUserPin, setEditUserPin] = useState('');
+  const [manualPredictionUserId, setManualPredictionUserId] = useState('');
+  const [manualPredictionNumber, setManualPredictionNumber] = useState('');
+  const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
+  const [editingPredictionValue, setEditingPredictionValue] = useState('');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -73,15 +77,25 @@ export default function Admin() {
 
   const active = events.find((e) => e.status === 'active');
   const activePreds = active ? preds.filter((p) => p.event_id === active.id) : [];
-  const sortedActivePreds = [...activePreds].sort((a, b) => {
-    if (predictionSort === 'number') {
-      return Number(a.prediction) - Number(b.prediction);
-    }
+  const activePredUserIds = new Set(activePreds.map((p) => p.user_id));
+  const availablePredictionUsers = users.filter((u) => !activePredUserIds.has(u.id));
 
+  const sortedActivePreds = [...activePreds].sort((a, b) => {
     const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
     const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
     return nameA.localeCompare(nameB, 'vi');
   });
+
+  const groupedActivePreds = Object.values(
+    activePreds.reduce<Record<string, { number: number; predictions: Prediction[] }>>((groups, prediction) => {
+      const key = String(Number(prediction.prediction));
+      if (!groups[key]) {
+        groups[key] = { number: Number(prediction.prediction), predictions: [] };
+      }
+      groups[key].predictions.push(prediction);
+      return groups;
+    }, {})
+  ).sort((a, b) => a.number - b.number);
 
   async function addUser(e: any) {
     e.preventDefault();
@@ -153,6 +167,80 @@ export default function Admin() {
     }
 
     cancelEditUser();
+    load();
+  }
+
+  async function addManualPrediction(e: any) {
+    e.preventDefault();
+    if (!active) return;
+
+    if (!manualPredictionUserId) {
+      alert('Hãy chọn người tham gia.');
+      return;
+    }
+
+    if (!/^\d{2}$/.test(manualPredictionNumber)) {
+      alert('Dự đoán phải gồm đúng 2 chữ số, từ 00 đến 99.');
+      return;
+    }
+
+    const { error } = await supabase.from('predictions').insert({
+      event_id: active.id,
+      user_id: manualPredictionUserId,
+      prediction: Number(manualPredictionNumber),
+    });
+
+    if (error) {
+      alert('Không thể thêm dự đoán: ' + error.message);
+      return;
+    }
+
+    setManualPredictionUserId('');
+    setManualPredictionNumber('');
+    load();
+  }
+
+  function startEditPrediction(prediction: Prediction) {
+    setEditingPredictionId(prediction.id);
+    setEditingPredictionValue(formatTwoDigits(prediction.prediction));
+  }
+
+  function cancelEditPrediction() {
+    setEditingPredictionId(null);
+    setEditingPredictionValue('');
+  }
+
+  async function updatePrediction(id: string) {
+    if (!/^\d{2}$/.test(editingPredictionValue)) {
+      alert('Dự đoán phải gồm đúng 2 chữ số, từ 00 đến 99.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('predictions')
+      .update({ prediction: Number(editingPredictionValue) })
+      .eq('id', id);
+
+    if (error) {
+      alert('Không thể cập nhật dự đoán: ' + error.message);
+      return;
+    }
+
+    cancelEditPrediction();
+    load();
+  }
+
+  async function deletePrediction(prediction: Prediction) {
+    const displayName = prediction.users?.name || 'người tham gia này';
+    if (!confirm(`Xóa dự đoán của ${displayName}?`)) return;
+
+    const { error } = await supabase.from('predictions').delete().eq('id', prediction.id);
+    if (error) {
+      alert('Không thể xóa dự đoán: ' + error.message);
+      return;
+    }
+
+    if (editingPredictionId === prediction.id) cancelEditPrediction();
     load();
   }
 
@@ -257,6 +345,42 @@ export default function Admin() {
                 </div>
               </div>
 
+              <form className="admin-manual-prediction" onSubmit={addManualPrediction}>
+                <div className="admin-manual-copy">
+                  <div className="admin-manual-title">Thêm dự đoán thủ công</div>
+                  <div className="muted">Dùng khi người chơi nhắn tin nhờ admin nhập hộ.</div>
+                </div>
+                <div className="admin-manual-controls">
+                  <select
+                    className="input"
+                    value={manualPredictionUserId}
+                    onChange={(e) => setManualPredictionUserId(e.target.value)}
+                    required
+                  >
+                    <option value="">Chọn người chưa dự đoán</option>
+                    {availablePredictionUsers.map((u) => (
+                      <option value={u.id} key={u.id}>
+                        {u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="input two-digit-input admin-manual-number"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={2}
+                    pattern="\d{2}"
+                    placeholder="00–99"
+                    value={manualPredictionNumber}
+                    onChange={(e) => setManualPredictionNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    required
+                  />
+                  <button className="btn admin-manual-add" type="submit" disabled={availablePredictionUsers.length === 0}>
+                    + Thêm
+                  </button>
+                </div>
+              </form>
+
               <div className="result-entry-box">
                 <div>
                   <div className="result-entry-title">Kết quả trúng giải</div>
@@ -304,18 +428,110 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="grid" style={{ marginTop: 18 }}>
-                {sortedActivePreds.map((p) => (
-                  <div className="card person prediction-card" key={p.id}>
-                    <img className="avatar" src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} />
-                    <div className="prediction-user">
-                      <b>{p.users?.name}</b>
-                      <div className="muted">{p.users?.nickname}</div>
+              {predictionSort === 'name' ? (
+                <div className="prediction-name-list admin-prediction-name-list">
+                  {sortedActivePreds.map((p) => (
+                    <div className={'prediction-name-row admin-prediction-row ' + (editingPredictionId === p.id ? 'is-editing' : '')} key={p.id}>
+                      <div className="prediction-name-person">
+                        <img
+                          className="prediction-mini-avatar"
+                          src={p.users?.avatar_url || '/avatar.svg'}
+                          alt={p.users?.name || 'Avatar'}
+                        />
+                        <div className="prediction-name-copy">
+                          <b>{p.users?.name}</b>
+                          <span>{p.users?.nickname || '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className="admin-prediction-row-right">
+                        <div className="prediction-number-pill">{formatTwoDigits(p.prediction)}</div>
+                        <div className="admin-prediction-actions">
+                          <button className="btn edit-btn compact" type="button" onClick={() => startEditPrediction(p)}>
+                            Sửa
+                          </button>
+                          <button className="btn danger compact" type="button" onClick={() => deletePrediction(p)}>
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="number">{formatTwoDigits(p.prediction)}</div>
+                  ))}
+                </div>
+              ) : (
+                <div className="prediction-number-list admin-number-list">
+                  {groupedActivePreds.map((group) => (
+                    <div className="prediction-number-row" key={group.number}>
+                      <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
+                      <div className="prediction-number-avatars">
+                        {group.predictions.map((p) => {
+                          const tooltip = p.users?.nickname
+                            ? (p.users?.name || '') + ' • ' + p.users.nickname + ' • Bấm để sửa'
+                            : (p.users?.name || 'Người tham gia') + ' • Bấm để sửa';
+
+                          return (
+                            <button
+                              className={'prediction-avatar-tooltip admin-avatar-edit ' + (editingPredictionId === p.id ? 'selected' : '')}
+                              data-tooltip={tooltip}
+                              type="button"
+                              key={p.id}
+                              onClick={() => startEditPrediction(p)}
+                            >
+                              <img
+                                className="prediction-number-avatar"
+                                src={p.users?.avatar_url || '/avatar.svg'}
+                                alt={p.users?.name || 'Avatar'}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="prediction-number-count">{group.predictions.length} người</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {editingPredictionId && (() => {
+                const editingPrediction = activePreds.find((p) => p.id === editingPredictionId);
+                if (!editingPrediction) return null;
+
+                return (
+                  <div className="admin-prediction-editor">
+                    <div className="admin-prediction-editor-person">
+                      <img
+                        className="prediction-mini-avatar"
+                        src={editingPrediction.users?.avatar_url || '/avatar.svg'}
+                        alt={editingPrediction.users?.name || 'Avatar'}
+                      />
+                      <div>
+                        <b>{editingPrediction.users?.name}</b>
+                        <div className="muted">{editingPrediction.users?.nickname || '—'}</div>
+                      </div>
+                    </div>
+                    <input
+                      className="input two-digit-input admin-editor-number"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      pattern="\d{2}"
+                      value={editingPredictionValue}
+                      onChange={(e) => setEditingPredictionValue(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    />
+                    <div className="admin-prediction-editor-actions">
+                      <button className="btn compact" type="button" onClick={() => updatePrediction(editingPrediction.id)}>
+                        Lưu
+                      </button>
+                      <button className="btn danger compact" type="button" onClick={() => deletePrediction(editingPrediction)}>
+                        Xóa
+                      </button>
+                      <button className="btn ghost compact" type="button" onClick={cancelEditPrediction}>
+                        Hủy
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </>
           )}
         </section>
