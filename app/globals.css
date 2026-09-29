@@ -396,3 +396,125 @@ body:after{
   10%{opacity:1}
   100%{transform:translate(-50%,115vh) rotate(760deg) scale(var(--s));opacity:.95}
 }
+
+/* Compact prediction lists: frontend current tab only */
+.prediction-name-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 12px;
+}
+.prediction-name-row{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 10px;
+  border:1px solid rgba(171,207,232,.20);
+  border-radius:14px;
+  background:rgba(7,29,46,.42);
+  box-shadow:0 8px 18px rgba(0,0,0,.10);
+}
+.prediction-name-person{display:flex;align-items:center;gap:10px;min-width:0}
+.prediction-mini-avatar{
+  width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;
+  border:2px solid rgba(255,125,54,.88);
+  box-shadow:0 0 0 3px rgba(255,90,48,.07);
+}
+.prediction-name-copy{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.prediction-name-copy b{
+  font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.prediction-name-copy span{
+  margin-top:3px;font-size:12px;color:#8ea4b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.prediction-number-pill{
+  min-width:46px;text-align:center;padding:5px 8px;border-radius:11px;
+  color:#ff9a3d;font-size:24px;line-height:1;font-weight:900;
+  background:rgba(255,111,48,.08);border:1px solid rgba(255,125,54,.16);
+}
+.prediction-number-list{
+  display:grid;
+  gap:7px;
+}
+.prediction-number-row{
+  min-height:54px;
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:7px 10px;
+  border:1px solid rgba(171,207,232,.18);
+  border-radius:14px;
+  background:rgba(7,29,46,.40);
+}
+.prediction-number-label{
+  width:46px;height:38px;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,rgba(255,23,79,.96),rgba(255,138,35,.96));
+  color:#fff;font-weight:900;font-size:20px;
+  box-shadow:0 8px 18px rgba(255,75,48,.16);
+}
+.prediction-number-avatars{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.prediction-avatar-tooltip{position:relative;display:inline-flex;outline:none}
+.prediction-number-avatar{
+  width:36px;height:36px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,130,63,.9);
+  background:#0a2135;
+  box-shadow:0 0 0 2px rgba(255,94,47,.08);
+  transition:.16s ease;
+}
+.prediction-avatar-tooltip:hover .prediction-number-avatar,
+.prediction-avatar-tooltip:focus .prediction-number-avatar{
+  transform:translateY(-2px) scale(1.06);
+  box-shadow:0 5px 14px rgba(0,0,0,.22),0 0 0 2px rgba(255,119,54,.14);
+}
+.prediction-avatar-tooltip:after{
+  content:attr(data-tooltip);
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 8px);
+  transform:translateX(-50%) translateY(4px);
+  width:max-content;max-width:210px;
+  padding:7px 9px;border-radius:9px;
+  background:#020d17;color:#fff;
+  border:1px solid rgba(193,222,242,.22);
+  box-shadow:0 10px 24px rgba(0,0,0,.32);
+  font-size:12px;line-height:1.2;white-space:nowrap;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:.15s ease;
+  z-index:30;
+}
+.prediction-avatar-tooltip:hover:after,
+.prediction-avatar-tooltip:focus:after{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
+}
+.prediction-number-count{
+  color:#7f95a5;font-size:11px;white-space:nowrap;
+}
+@media(max-width:650px){
+  .prediction-name-list{grid-template-columns:1fr;gap:6px}
+  .prediction-name-row{min-height:52px;padding:6px 8px;border-radius:12px}
+  .prediction-mini-avatar{width:36px;height:36px}
+  .prediction-name-copy b{font-size:13px}
+  .prediction-name-copy span{font-size:11px}
+  .prediction-number-pill{min-width:42px;font-size:21px;padding:4px 7px}
+  .prediction-number-list{gap:5px}
+  .prediction-number-row{
+    min-height:48px;
+    grid-template-columns:48px minmax(0,1fr);
+    gap:8px;
+    padding:6px 8px;
+    border-radius:12px;
+  }
+  .prediction-number-label{width:40px;height:34px;font-size:18px;border-radius:10px}
+  .prediction-number-avatar{width:32px;height:32px}
+  .prediction-number-count{display:none}
+  .prediction-number-avatars{gap:5px}
+}
