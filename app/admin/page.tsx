@@ -30,6 +30,8 @@ export default function Admin() {
   const [manualPredictionNumber, setManualPredictionNumber] = useState('');
   const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
   const [editingPredictionValue, setEditingPredictionValue] = useState('');
+  const [editingEventTitle, setEditingEventTitle] = useState(false);
+  const [eventTitleDraft, setEventTitleDraft] = useState('');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -167,6 +169,40 @@ export default function Admin() {
     }
 
     cancelEditUser();
+    load();
+  }
+
+  function startEditEventTitle() {
+    if (!active) return;
+    setEventTitleDraft(active.title);
+    setEditingEventTitle(true);
+  }
+
+  function cancelEditEventTitle() {
+    setEditingEventTitle(false);
+    setEventTitleDraft('');
+  }
+
+  async function saveEventTitle() {
+    if (!active) return;
+    const nextTitle = eventTitleDraft.trim();
+
+    if (!nextTitle) {
+      alert('Tên sự kiện không được để trống.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('events')
+      .update({ title: nextTitle })
+      .eq('id', active.id);
+
+    if (error) {
+      alert('Không thể cập nhật tên sự kiện: ' + error.message);
+      return;
+    }
+
+    cancelEditEventTitle();
     load();
   }
 
@@ -325,7 +361,39 @@ export default function Admin() {
 
       {tab === 'board' && (
         <section className="panel">
-          <h2 className="section-title">{active ? 'Đang mở: ' + active.title : 'Tạo sự kiện mới'}</h2>
+          {active ? (
+            <div className="admin-event-heading">
+              {editingEventTitle ? (
+                <div className="admin-event-title-editor">
+                  <input
+                    className="input"
+                    value={eventTitleDraft}
+                    onChange={(e) => setEventTitleDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEventTitle();
+                      if (e.key === 'Escape') cancelEditEventTitle();
+                    }}
+                    autoFocus
+                  />
+                  <button className="btn compact" type="button" onClick={saveEventTitle}>
+                    Lưu
+                  </button>
+                  <button className="btn ghost compact" type="button" onClick={cancelEditEventTitle}>
+                    Hủy
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h2 className="section-title admin-event-title">Đang mở: {active.title}</h2>
+                  <button className="btn ghost compact admin-event-title-edit" type="button" onClick={startEditEventTitle}>
+                    Sửa tên
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <h2 className="section-title">Tạo sự kiện mới</h2>
+          )}
           {!active && (
             <form className="form two" onSubmit={createEvent}>
               <input className="input" required placeholder="Tên sự kiện" value={title} onChange={(e) => setTitle(e.target.value)} />
