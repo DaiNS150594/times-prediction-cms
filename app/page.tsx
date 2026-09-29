@@ -144,9 +144,11 @@ export default function Home() {
       {showWinnerPopup && latestClosedEvent && (
         <div className="winner-popup-backdrop" role="dialog" aria-modal="true" aria-label="Thông báo người trúng giải">
           <div className="winner-celebration" aria-hidden="true">
-            {Array.from({ length: 24 }).map((_, index) => (
-              <span className={'confetti-piece confetti-' + (index + 1)} key={index} />
-            ))}
+            <img
+              className="winner-confetti-gif"
+              src="/Confetti - Full Screen.gif"
+              alt=""
+            />
           </div>
 
           <section className="winner-popup">
