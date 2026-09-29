@@ -62,14 +62,21 @@ export default function Home() {
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
 
   const sortedCurrent = [...current].sort((a, b) => {
-    if (predictionSort === 'number') {
-      return Number(a.prediction) - Number(b.prediction);
-    }
-
     const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
     const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
     return nameA.localeCompare(nameB, 'vi');
   });
+
+  const groupedCurrent = Object.values(
+    current.reduce<Record<string, { number: number; predictions: Prediction[] }>>((groups, prediction) => {
+      const key = String(Number(prediction.prediction));
+      if (!groups[key]) {
+        groups[key] = { number: Number(prediction.prediction), predictions: [] };
+      }
+      groups[key].predictions.push(prediction);
+      return groups;
+    }, {})
+  ).sort((a, b) => a.number - b.number);
 
   function formatTwoDigits(value: number | string | null | undefined) {
     if (value === null || value === undefined || value === '') return '—';
@@ -324,18 +331,52 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid">
-            {sortedCurrent.map((p) => (
-              <div className="card person" key={p.id}>
-                <img className="avatar" src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} />
-                <div>
-                  <b>{p.users?.name}</b>
-                  <div className="muted">{p.users?.nickname || ''}</div>
+          {predictionSort === 'name' ? (
+            <div className="prediction-name-list">
+              {sortedCurrent.map((p) => (
+                <div className="prediction-name-row" key={p.id}>
+                  <div className="prediction-name-person">
+                    <img
+                      className="prediction-mini-avatar"
+                      src={p.users?.avatar_url || '/avatar.svg'}
+                      alt={p.users?.name || 'Avatar'}
+                    />
+                    <div className="prediction-name-copy">
+                      <b>{p.users?.name}</b>
+                      <span>{p.users?.nickname || '—'}</span>
+                    </div>
+                  </div>
+                  <div className="prediction-number-pill">{formatTwoDigits(p.prediction)}</div>
                 </div>
-                <div className="number">{formatTwoDigits(p.prediction)}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="prediction-number-list">
+              {groupedCurrent.map((group) => (
+                <div className="prediction-number-row" key={group.number}>
+                  <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
+                  <div className="prediction-number-avatars">
+                    {group.predictions.map((p) => {
+                      const tooltip = p.users?.nickname
+                        ? (p.users?.name || '') + ' • ' + p.users.nickname
+                        : p.users?.name || 'Người tham gia';
+
+                      return (
+                        <span className="prediction-avatar-tooltip" data-tooltip={tooltip} key={p.id} tabIndex={0}>
+                          <img
+                            className="prediction-number-avatar"
+                            src={p.users?.avatar_url || '/avatar.svg'}
+                            alt={p.users?.name || 'Avatar'}
+                          />
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <div className="prediction-number-count">{group.predictions.length} người</div>
+                </div>
+              ))}
+            </div>
+          )}
           {active?.actual_result != null && (
             <h3>
               Kết quả thực tế: <span className="number">{active.actual_result}</span>
