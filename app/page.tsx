@@ -11,6 +11,10 @@ export default function Home() {
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
+  const [submitUserId, setSubmitUserId] = useState('');
+  const [submitNumber, setSubmitNumber] = useState('');
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -39,6 +43,9 @@ export default function Home() {
 
   const active = events.find((e) => e.status === 'active');
   const current = active ? preds.filter((p) => p.event_id === active.id) : [];
+  const submittedUserIds = new Set(current.map((p) => p.user_id));
+  const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
+
   const sortedCurrent = [...current].sort((a, b) => {
     if (predictionSort === 'number') {
       return Number(a.prediction) - Number(b.prediction);
@@ -48,6 +55,54 @@ export default function Home() {
     const nameB = (b.users?.name || '').toLocaleLowerCase('vi');
     return nameA.localeCompare(nameB, 'vi');
   });
+
+  function formatTwoDigits(value: number | string | null | undefined) {
+    if (value === null || value === undefined || value === '') return '—';
+    return String(Number(value)).padStart(2, '0');
+  }
+
+  async function submitPrediction(e: any) {
+    e.preventDefault();
+    setSubmitMessage('');
+
+    if (!active) {
+      setSubmitMessage('Hiện chưa có sự kiện đang mở.');
+      return;
+    }
+
+    if (!submitUserId) {
+      setSubmitMessage('Hãy chọn tên của bạn.');
+      return;
+    }
+
+    if (!/^\d{2}$/.test(submitNumber)) {
+      setSubmitMessage('Dự đoán phải gồm đúng 2 chữ số, từ 00 đến 99.');
+      return;
+    }
+
+    setSubmitting(true);
+    const { error } = await supabase.from('predictions').insert({
+      event_id: active.id,
+      user_id: submitUserId,
+      prediction: Number(submitNumber),
+    });
+    setSubmitting(false);
+
+    if (error) {
+      if (error.code === '23505') {
+        setSubmitMessage('Người này đã gửi dự đoán cho sự kiện hiện tại và không thể nhập lại.');
+      } else {
+        setSubmitMessage('Không thể gửi dự đoán: ' + error.message);
+      }
+      await load();
+      return;
+    }
+
+    setSubmitMessage('Đã ghi nhận dự đoán. Bạn chỉ được gửi 1 lần cho sự kiện này.');
+    setSubmitUserId('');
+    setSubmitNumber('');
+    await load();
+  }
 
   function toggleHistory(id: string) {
     setExpandedHistoryIds((current) =>
@@ -84,6 +139,62 @@ export default function Home() {
         <section className="panel">
           <h2 className="section-title">{active?.title || 'Chưa có sự kiện đang mở'}</h2>
           {active?.event_date && <p className="muted">Thời gian: {new Date(active.event_date).toLocaleString('vi-VN')}</p>}
+
+          {active && (
+            <div className="self-predict-box">
+              <div className="self-predict-head">
+                <div>
+                  <div className="self-predict-title">Gửi dự đoán của bạn</div>
+                  <div className="self-predict-subtitle">Mỗi người chỉ được gửi 1 lần • Nhập đúng 2 chữ số (00–99)</div>
+                </div>
+                <div className="prediction-progress">
+                  <b>{current.length}</b>/<span>{users.length}</span> đã dự đoán
+                </div>
+              </div>
+
+              <form className="self-predict-form" onSubmit={submitPrediction}>
+                <select
+                  className="input"
+                  value={submitUserId}
+                  onChange={(e) => {
+                    setSubmitUserId(e.target.value);
+                    setSubmitMessage('');
+                  }}
+                  required
+                >
+                  <option value="">Chọn tên của bạn</option>
+                  {availableUsers.map((u) => (
+                    <option value={u.id} key={u.id}>
+                      {u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="input two-digit-input"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  pattern="\d{2}"
+                  placeholder="VD: 05"
+                  value={submitNumber}
+                  onChange={(e) => {
+                    setSubmitNumber(e.target.value.replace(/\D/g, '').slice(0, 2));
+                    setSubmitMessage('');
+                  }}
+                  required
+                />
+                <button className="btn self-predict-btn" type="submit" disabled={submitting || availableUsers.length === 0}>
+                  {submitting ? 'Đang gửi...' : 'Xác nhận dự đoán'}
+                </button>
+              </form>
+
+              {submitMessage && <div className="prediction-submit-message">{submitMessage}</div>}
+              {availableUsers.length === 0 && (
+                <div className="prediction-submit-message success">Tất cả người tham gia đã gửi dự đoán.</div>
+              )}
+            </div>
+          )}
+
           <div className="prediction-toolbar public-sort-toolbar">
             <div className="sort-meta">
               <div className="sort-title">Sắp xếp bảng dự đoán</div>
@@ -117,7 +228,7 @@ export default function Home() {
                   <b>{p.users?.name}</b>
                   <div className="muted">{p.users?.nickname || ''}</div>
                 </div>
-                <div className="number">{p.prediction}</div>
+                <div className="number">{formatTwoDigits(p.prediction)}</div>
               </div>
             ))}
           </div>
@@ -165,7 +276,7 @@ export default function Home() {
                       </div>
                     </td>
                     <td>
-                      <b>{e.actual_result ?? '—'}</b>
+                      <b>{formatTwoDigits(e.actual_result)}</b>
                     </td>
                     <td>
                       <button
@@ -195,7 +306,7 @@ export default function Home() {
                                     {isWinner && <span className="winner-crown">🏆</span>}
                                     {p.users?.nickname || p.users?.name}
                                   </span>
-                                  <span className="history-prediction-number">{p.prediction}</span>
+                                  <span className="history-prediction-number">{formatTwoDigits(p.prediction)}</span>
                                 </div>
                               );
                             })}
