@@ -16,6 +16,7 @@ export default function Home() {
   const [submitNumber, setSubmitNumber] = useState('');
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [dismissedWinnerEventId, setDismissedWinnerEventId] = useState<string | null>(null);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -43,6 +44,19 @@ export default function Home() {
   }, []);
 
   const active = events.find((e) => e.status === 'active');
+  const latestClosedEvent = events.find((e) => e.status === 'closed' && e.actual_result != null);
+  const latestWinners = latestClosedEvent
+    ? preds.filter(
+        (p) =>
+          p.event_id === latestClosedEvent.id &&
+          Number(p.prediction) === Number(latestClosedEvent.actual_result)
+      )
+    : [];
+  const showWinnerPopup =
+    !active &&
+    !!latestClosedEvent &&
+    latestWinners.length > 0 &&
+    dismissedWinnerEventId !== latestClosedEvent.id;
   const current = active ? preds.filter((p) => p.event_id === active.id) : [];
   const submittedUserIds = new Set(current.map((p) => p.user_id));
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
@@ -126,7 +140,66 @@ export default function Home() {
   }
 
   return (
-    <main className="wrap">
+    <>
+      {showWinnerPopup && latestClosedEvent && (
+        <div className="winner-popup-backdrop" role="dialog" aria-modal="true" aria-label="Thông báo người trúng giải">
+          <div className="winner-celebration" aria-hidden="true">
+            {Array.from({ length: 24 }).map((_, index) => (
+              <span className={'confetti-piece confetti-' + (index + 1)} key={index} />
+            ))}
+          </div>
+
+          <section className="winner-popup">
+            <button
+              className="winner-popup-close"
+              type="button"
+              aria-label="Đóng thông báo"
+              onClick={() => setDismissedWinnerEventId(latestClosedEvent.id)}
+            >
+              ×
+            </button>
+
+            <div className="winner-trophy">🏆</div>
+            <div className="winner-kicker">KẾT QUẢ SỰ KIỆN</div>
+            <h2>Chúc mừng người trúng giải!</h2>
+            <div className="winner-event-name">{latestClosedEvent.title}</div>
+
+            <div className="winner-result">
+              <span>Kết quả</span>
+              <strong>{formatTwoDigits(latestClosedEvent.actual_result)}</strong>
+            </div>
+
+            <div className="winner-list">
+              {latestWinners.map((winner) => (
+                <div className="winner-person" key={winner.id}>
+                  <img
+                    className="winner-avatar"
+                    src={winner.users?.avatar_url || '/avatar.svg'}
+                    alt={winner.users?.name || 'Người trúng giải'}
+                  />
+                  <div>
+                    <b>{winner.users?.name}</b>
+                    <span>{winner.users?.nickname || 'Người chiến thắng'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="btn winner-popup-button"
+              type="button"
+              onClick={() => {
+                setDismissedWinnerEventId(latestClosedEvent.id);
+                setTab('history');
+              }}
+            >
+              Xem lịch sử sự kiện
+            </button>
+          </section>
+        </div>
+      )}
+
+      <main className="wrap">
       <div className="topbar">
         <span></span>
         <a className="admin-link" href="/admin">CMS Admin →</a>
@@ -350,6 +423,7 @@ export default function Home() {
           </table>
         </section>
       )}
-    </main>
+      </main>
+    </>
   );
 }
