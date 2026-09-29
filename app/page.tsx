@@ -31,6 +31,19 @@ export default function Home() {
 
   useEffect(() => {
     load();
+
+    const getTabFromHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'users' || hash === 'history' || hash === 'current') {
+        setTab(hash);
+      } else {
+        setTab('current');
+      }
+    };
+
+    getTabFromHash();
+    window.addEventListener('hashchange', getTabFromHash);
+
     const ch = supabase
       .channel('frontend-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, load)
@@ -39,6 +52,7 @@ export default function Home() {
       .subscribe();
 
     return () => {
+      window.removeEventListener('hashchange', getTabFromHash);
       supabase.removeChannel(ch);
     };
   }, []);
@@ -197,7 +211,7 @@ export default function Home() {
               type="button"
               onClick={() => {
                 setDismissedWinnerEventId(latestClosedEvent.id);
-                setTab('history');
+                window.location.hash = 'history';
               }}
             >
               Xem lịch sử sự kiện
@@ -218,16 +232,16 @@ export default function Home() {
         <p>Chơi game bằng thực lực!</p>
       </header>
 
-      <nav className="tabs">
-        <button className={'tab ' + (tab === 'current' ? 'active' : '')} onClick={() => setTab('current')}>
+      <nav className="tabs" aria-label="Các khu vực">
+        <a className={'tab ' + (tab === 'current' ? 'active' : '')} href="#current">
           Dự đoán hiện tại
-        </button>
-        <button className={'tab ' + (tab === 'users' ? 'active' : '')} onClick={() => setTab('users')}>
+        </a>
+        <a className={'tab ' + (tab === 'users' ? 'active' : '')} href="#users">
           Người tham gia
-        </button>
-        <button className={'tab ' + (tab === 'history' ? 'active' : '')} onClick={() => setTab('history')}>
+        </a>
+        <a className={'tab ' + (tab === 'history' ? 'active' : '')} href="#history">
           Lịch sử
-        </button>
+        </a>
       </nav>
 
       {tab === 'current' && (
