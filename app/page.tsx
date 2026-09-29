@@ -12,15 +12,16 @@ export default function Home() {
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [submitUserId, setSubmitUserId] = useState('');
+  const [submitPin, setSubmitPin] = useState('');
   const [submitNumber, setSubmitNumber] = useState('');
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
-      supabase.from('users').select('*').order('name'),
+      supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
-      supabase.from('predictions').select('*,users(*)'),
+      supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
@@ -75,24 +76,37 @@ export default function Home() {
       return;
     }
 
+    if (!/^\d{4}$/.test(submitPin)) {
+      setSubmitMessage('PIN phải gồm đúng 4 chữ số.');
+      return;
+    }
+
     if (!/^\d{2}$/.test(submitNumber)) {
       setSubmitMessage('Dự đoán phải gồm đúng 2 chữ số, từ 00 đến 99.');
       return;
     }
 
     setSubmitting(true);
-    const { error } = await supabase.from('predictions').insert({
-      event_id: active.id,
-      user_id: submitUserId,
-      prediction: Number(submitNumber),
+    const { error } = await supabase.rpc('submit_prediction_with_pin', {
+      p_event_id: active.id,
+      p_user_id: submitUserId,
+      p_pin_code: submitPin,
+      p_prediction: Number(submitNumber),
     });
     setSubmitting(false);
 
     if (error) {
-      if (error.code === '23505') {
-        setSubmitMessage('Người này đã gửi dự đoán cho sự kiện hiện tại và không thể nhập lại.');
+      const message = error.message || '';
+      if (message.includes('PIN không đúng')) {
+        setSubmitMessage('PIN không đúng. Vui lòng kiểm tra lại.');
+      } else if (message.includes('đã gửi dự đoán') || error.code === '23505') {
+        setSubmitMessage('Bạn đã gửi dự đoán cho sự kiện này và không thể nhập lại.');
+      } else if (message.includes('chưa được cấp PIN')) {
+        setSubmitMessage('Tài khoản này chưa được admin cấp PIN.');
+      } else if (message.includes('không còn mở')) {
+        setSubmitMessage('Sự kiện đã đóng, không thể gửi dự đoán.');
       } else {
-        setSubmitMessage('Không thể gửi dự đoán: ' + error.message);
+        setSubmitMessage('Không thể gửi dự đoán: ' + message);
       }
       await load();
       return;
@@ -100,6 +114,7 @@ export default function Home() {
 
     setSubmitMessage('Đã ghi nhận dự đoán. Bạn chỉ được gửi 1 lần cho sự kiện này.');
     setSubmitUserId('');
+    setSubmitPin('');
     setSubmitNumber('');
     await load();
   }
@@ -145,7 +160,7 @@ export default function Home() {
               <div className="self-predict-head">
                 <div>
                   <div className="self-predict-title">Gửi dự đoán của bạn</div>
-                  <div className="self-predict-subtitle">Mỗi người chỉ được gửi 1 lần • Nhập đúng 2 chữ số (00–99)</div>
+                  <div className="self-predict-subtitle">Mỗi người chỉ được gửi 1 lần • Xác nhận bằng PIN 4 số • Dự đoán 00–99</div>
                 </div>
                 <div className="prediction-progress">
                   <b>{current.length}</b>/<span>{users.length}</span> đã dự đoán
@@ -158,6 +173,7 @@ export default function Home() {
                   value={submitUserId}
                   onChange={(e) => {
                     setSubmitUserId(e.target.value);
+                    setSubmitPin('');
                     setSubmitMessage('');
                   }}
                   required
@@ -169,6 +185,21 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
+                <input
+                  className="input pin-input"
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={4}
+                  pattern="\d{4}"
+                  placeholder="PIN 4 số"
+                  value={submitPin}
+                  onChange={(e) => {
+                    setSubmitPin(e.target.value.replace(/\D/g, '').slice(0, 4));
+                    setSubmitMessage('');
+                  }}
+                  required
+                />
                 <input
                   className="input two-digit-input"
                   type="text"
