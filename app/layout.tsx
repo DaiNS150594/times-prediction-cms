@@ -14,21 +14,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body className={openSans.className}>
-        <div className="bg-shell" aria-hidden="true">
-          <video
-            className="site-bg-video"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="/times-bg.png"
-          >
-            <source src="/fam-times-bg.mp4" type="video/mp4" />
-          </video>
-        </div>
-        {children}
-      </body>
+      <body className={openSans.className}>{children}</body>
     </html>
   );
 }
