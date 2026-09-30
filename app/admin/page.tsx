@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, User } from '@/types';
-import NiceSelect from '@/components/NiceSelect';
 
 export default function Admin() {
   const [session, setSession] = useState<any>(undefined);
@@ -420,7 +419,7 @@ export default function Admin() {
                   <div className="muted">Dùng khi người chơi nhắn tin nhờ admin nhập hộ.</div>
                 </div>
                 <div className="admin-manual-controls">
-                  <NiceSelect
+                  <select
                     className="input"
                     value={manualPredictionUserId}
                     onChange={(e) => setManualPredictionUserId(e.target.value)}
@@ -432,7 +431,7 @@ export default function Admin() {
                         {u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}
                       </option>
                     ))}
-                  </NiceSelect>
+                  </select>
                   <input
                     className="input two-digit-input admin-manual-number"
                     type="text"
