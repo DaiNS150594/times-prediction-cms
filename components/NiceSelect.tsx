@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import type { SelectHTMLAttributes } from 'react';
-import Script from 'next/script';
 
 type NiceSelectProps = SelectHTMLAttributes<HTMLSelectElement>;
 
@@ -105,7 +104,6 @@ export default function NiceSelect(props: NiceSelectProps) {
   return (
     <>
       <select ref={selectRef} {...props} />
-      <Script src="/jquery.nice-select.js" strategy="afterInteractive" data-nice-select-plugin="true" />
     </>
   );
 }
