@@ -9,7 +9,7 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
-  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
+  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('number');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [submitUserId, setSubmitUserId] = useState('');
   const [submitPin, setSubmitPin] = useState('');
@@ -246,7 +246,10 @@ export default function Home() {
 
       {tab === 'current' && (
         <section className="panel">
-          <h2 className="section-title">{active?.title || 'Chưa có sự kiện đang mở'}</h2>
+          <h2 className={'section-title ' + (active ? 'status-live' : 'status-offline')}>
+            <span className="section-status-dot" aria-hidden="true"></span>
+            <span>{active?.title || 'Chưa có sự kiện đang mở'}</span>
+          </h2>
           {active?.event_date && <p className="muted">Thời gian: {new Date(active.event_date).toLocaleString('vi-VN')}</p>}
 
           {active && (
