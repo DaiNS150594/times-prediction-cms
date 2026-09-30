@@ -287,6 +287,13 @@ export default function Home() {
             <span>{active?.title || 'Chưa có sự kiện đang mở'}</span>
           </h2>
           {active?.event_date && <p className="muted">Thời gian: {new Date(active.event_date).toLocaleString('vi-VN')}</p>}
+          {active?.event_link && (
+            <a className="event-live-link" href={active.event_link} target="_blank" rel="noreferrer">
+              <span className="event-live-link-dot"></span>
+              <span>Tham gia sự kiện đang diễn ra</span>
+              <span className="event-live-link-arrow">↗</span>
+            </a>
+          )}
 
           {active && (
             <div className="self-predict-box">
