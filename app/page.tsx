@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, User } from '@/types';
-import NiceSelect from '@/components/NiceSelect';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -300,7 +299,7 @@ export default function Home() {
               </div>
 
               <form className="self-predict-form" onSubmit={submitPrediction}>
-                <NiceSelect
+                <select
                   className="input"
                   value={submitUserId}
                   onChange={(e) => {
@@ -316,7 +315,7 @@ export default function Home() {
                       {u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}
                     </option>
                   ))}
-                </NiceSelect>
+                </select>
                 <input
                   className="input pin-input"
                   type="password"
