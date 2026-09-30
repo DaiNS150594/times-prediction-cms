@@ -403,7 +403,7 @@ export default function Home() {
       )}
 
       {tab === 'users' && (
-        <section className="grid">
+        <section className="grid user-grid">
           {users.map((u) => (
             <article className="card person" key={u.id}>
               <img className="avatar big" src={u.avatar_url || '/avatar.svg'} alt={u.name} />
