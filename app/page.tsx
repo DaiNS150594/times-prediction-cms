@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, User } from '@/types';
+import NiceSelect from '@/components/NiceSelect';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -66,10 +67,9 @@ export default function Home() {
           Number(p.prediction) === Number(latestClosedEvent.actual_result)
       )
     : [];
-  const showWinnerPopup =
+  const showResultPopup =
     !active &&
     !!latestClosedEvent &&
-    latestWinners.length > 0 &&
     dismissedWinnerEventId !== latestClosedEvent.id;
   const current = active ? preds.filter((p) => p.event_id === active.id) : [];
   const submittedUserIds = new Set(current.map((p) => p.user_id));
@@ -162,15 +162,28 @@ export default function Home() {
 
   return (
     <>
-      {showWinnerPopup && latestClosedEvent && (
-        <div className="winner-popup-backdrop" role="dialog" aria-modal="true" aria-label="Thông báo người trúng giải">
-          <div className="winner-celebration" aria-hidden="true">
-            {Array.from({ length: 24 }).map((_, index) => (
-              <span className={'confetti-piece confetti-' + (index + 1)} key={index} />
-            ))}
-          </div>
+      {showResultPopup && latestClosedEvent && (
+        <div
+          className={'winner-popup-backdrop ' + (latestWinners.length === 0 ? 'no-winner-backdrop' : '')}
+          role="dialog"
+          aria-modal="true"
+          aria-label={latestWinners.length > 0 ? 'Thông báo người trúng giải' : 'Thông báo kết quả không có người trúng giải'}
+        >
+          {latestWinners.length > 0 ? (
+            <div className="winner-celebration" aria-hidden="true">
+              {Array.from({ length: 24 }).map((_, index) => (
+                <span className={'confetti-piece confetti-' + (index + 1)} key={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="rain-celebration" aria-hidden="true">
+              {Array.from({ length: 42 }).map((_, index) => (
+                <span className={'rain-drop rain-' + (index + 1)} key={index} />
+              ))}
+            </div>
+          )}
 
-          <section className="winner-popup">
+          <section className={'winner-popup ' + (latestWinners.length === 0 ? 'no-winner-popup' : '')}>
             <button
               className="winner-popup-close"
               type="button"
@@ -180,31 +193,53 @@ export default function Home() {
               ×
             </button>
 
-            <div className="winner-trophy">🏆</div>
-            <div className="winner-kicker">KẾT QUẢ SỰ KIỆN</div>
-            <h2>Chúc mừng người trúng giải!</h2>
-            <div className="winner-event-name">{latestClosedEvent.title}</div>
+            {latestWinners.length > 0 ? (
+              <>
+                <div className="winner-trophy">🏆</div>
+                <div className="winner-kicker">KẾT QUẢ SỰ KIỆN</div>
+                <h2>Chúc mừng người trúng giải!</h2>
+                <div className="winner-event-name">{latestClosedEvent.title}</div>
 
-            <div className="winner-result">
-              <span>Kết quả</span>
-              <strong>{formatTwoDigits(latestClosedEvent.actual_result)}</strong>
-            </div>
-
-            <div className="winner-list">
-              {latestWinners.map((winner) => (
-                <div className="winner-person" key={winner.id}>
-                  <img
-                    className="winner-avatar"
-                    src={winner.users?.avatar_url || '/avatar.svg'}
-                    alt={winner.users?.name || 'Người trúng giải'}
-                  />
-                  <div>
-                    <b>{winner.users?.name}</b>
-                    <span>{winner.users?.nickname || 'Người chiến thắng'}</span>
-                  </div>
+                <div className="winner-result">
+                  <span>Kết quả</span>
+                  <strong>{formatTwoDigits(latestClosedEvent.actual_result)}</strong>
                 </div>
-              ))}
-            </div>
+
+                <div className="winner-list">
+                  {latestWinners.map((winner) => (
+                    <div className="winner-person" key={winner.id}>
+                      <img
+                        className="winner-avatar"
+                        src={winner.users?.avatar_url || '/avatar.svg'}
+                        alt={winner.users?.name || 'Người trúng giải'}
+                      />
+                      <div>
+                        <b>{winner.users?.name}</b>
+                        <span>{winner.users?.nickname || 'Người chiến thắng'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="no-winner-icon">☔</div>
+                <div className="winner-kicker no-winner-kicker">KẾT QUẢ SỰ KIỆN</div>
+                <h2>Tiếc quá, chưa có ai trúng giải!</h2>
+                <div className="winner-event-name">{latestClosedEvent.title}</div>
+
+                <div className="winner-result no-winner-result">
+                  <span>Kết quả</span>
+                  <strong>{formatTwoDigits(latestClosedEvent.actual_result)}</strong>
+                </div>
+
+                <div className="no-winner-message">
+                  Không có người tham gia nào dự đoán đúng con số này.
+                  <br />
+                  Hẹn mọi người ở sự kiện tiếp theo!
+                </div>
+              </>
+            )}
 
             <button
               className="btn winner-popup-button"
@@ -265,7 +300,7 @@ export default function Home() {
               </div>
 
               <form className="self-predict-form" onSubmit={submitPrediction}>
-                <select
+                <NiceSelect
                   className="input"
                   value={submitUserId}
                   onChange={(e) => {
@@ -281,7 +316,7 @@ export default function Home() {
                       {u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}
                     </option>
                   ))}
-                </select>
+                </NiceSelect>
                 <input
                   className="input pin-input"
                   type="password"
