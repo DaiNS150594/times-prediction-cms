@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-<rect width="128" height="128" rx="24" fill="#ff1f25"/>
-<g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">
-<path d="M29 45c-9 9-9 29 0 38"/>
-<path d="M20 36c-15 15-15 41 0 56"/>
-<path d="M99 45c9 9 9 29 0 38"/>
-<path d="M108 36c15 15 15 41 0 56"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 130" preserveAspectRatio="xMidYMid meet">
+<rect width="256" height="130" rx="30" fill="#ff1f25"/>
+<g fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round">
+  <path d="M58 43c-13 12-13 32 0 44"/>
+  <path d="M44 29c-22 20-22 51 0 72"/>
+  <path d="M198 43c13 12 13 32 0 44"/>
+  <path d="M212 29c22 20 22 51 0 72"/>
 </g>
-<circle cx="64" cy="64" r="10" fill="#fff"/>
-<text x="64" y="89" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" letter-spacing="2" fill="#fff">LIVE</text>
+<circle cx="128" cy="65" r="15" fill="#fff"/>
+<text x="128" y="88" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" letter-spacing="1" fill="#ff1f25"> </text>
+<text x="146" y="82" text-anchor="start" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="700" letter-spacing="2" fill="#fff">LIVE</text>
 </svg>
