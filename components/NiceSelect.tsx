@@ -1,109 +1,143 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import type { SelectHTMLAttributes } from 'react';
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SelectHTMLAttributes,
+} from 'react';
 
 type NiceSelectProps = SelectHTMLAttributes<HTMLSelectElement>;
 
-let pluginReady = false;
-let pluginLoading: Promise<void> | null = null;
+export default function NiceSelect({
+  children,
+  value,
+  defaultValue,
+  onChange,
+  className = '',
+  disabled,
+  ...rest
+}: NiceSelectProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [internalValue, setInternalValue] = useState(String(defaultValue ?? ''));
 
-function loadNiceSelectPlugin() {
-  if (pluginReady) return Promise.resolve();
-  if (pluginLoading) return pluginLoading;
+  const options = useMemo(
+    () =>
+      Children.toArray(children)
+        .filter(isValidElement)
+        .map((child: any) => ({
+          value: String(child.props.value ?? ''),
+          label: child.props.children,
+          disabled: Boolean(child.props.disabled),
+        })),
+    [children]
+  );
 
-  pluginLoading = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector('script[data-nice-select-plugin="true"]') as HTMLScriptElement | null;
+  const selectedValue = value !== undefined ? String(value) : internalValue;
+  const selectedOption =
+    options.find((option) => option.value === selectedValue) || options[0];
 
-    if (existing) {
-      if ((window as any).jQuery?.fn?.niceSelect) {
-        pluginReady = true;
-        resolve();
-        return;
+  useEffect(() => {
+    const handleOutside = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
       }
+    };
 
-      existing.addEventListener('load', () => {
-        pluginReady = true;
-        resolve();
-      }, { once: true });
-      existing.addEventListener('error', () => reject(new Error('Không tải được Nice Select')), { once: true });
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  function selectOption(nextValue: string) {
+    const option = options.find((item) => item.value === nextValue);
+    if (!option || option.disabled || disabled) return;
+
+    if (value === undefined) {
+      setInternalValue(nextValue);
+    }
+
+    setOpen(false);
+
+    onChange?.({
+      target: { value: nextValue } as HTMLSelectElement,
+      currentTarget: { value: nextValue } as HTMLSelectElement,
+    } as React.ChangeEvent<HTMLSelectElement>);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (disabled) return;
+
+    if (event.key === 'Escape') {
+      setOpen(false);
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = '/jquery.nice-select.js';
-    script.async = true;
-    script.dataset.niceSelectPlugin = 'true';
-
-    script.onload = () => {
-      if ((window as any).jQuery?.fn?.niceSelect) {
-        pluginReady = true;
-        resolve();
-      } else {
-        reject(new Error('Nice Select chưa được gắn vào jQuery'));
-      }
-    };
-    script.onerror = () => reject(new Error('Không tải được Nice Select'));
-    document.head.appendChild(script);
-  });
-
-  return pluginLoading;
-}
-
-export default function NiceSelect(props: NiceSelectProps) {
-  const selectRef = useRef<HTMLSelectElement>(null);
-  const jqueryRef = useRef<any>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      const jqueryModule = await import('jquery');
-      if (!mounted || !selectRef.current) return;
-
-      const $ = jqueryModule.default;
-      (window as any).jQuery = $;
-      (window as any).$ = $;
-      jqueryRef.current = $;
-
-      await loadNiceSelectPlugin();
-      if (!mounted || !selectRef.current) return;
-
-      const $select = $(selectRef.current) as any;
-      if ($select.next('.nice-select').length) {
-        $select.niceSelect('update');
-      } else {
-        $select.niceSelect();
-      }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setOpen((current) => !current);
     }
 
-    init().catch((error) => {
-      console.error('Nice Select initialization failed:', error);
-    });
-
-    return () => {
-      mounted = false;
-      // React removes the select node on unmount. Do not destroy Nice Select here,
-      // because its destroy method restores the native select and can cause a flash
-      // during React Strict Mode effect re-runs.
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!jqueryRef.current || !selectRef.current) return;
-
-    const $select = jqueryRef.current(selectRef.current) as any;
-    if ($select.next('.nice-select').length && $select.niceSelect) {
-      $select.niceSelect('update');
+    if (event.key === 'ArrowDown' && open) {
+      event.preventDefault();
+      const currentIndex = options.findIndex((option) => option.value === selectedValue);
+      const next = options.slice(currentIndex + 1).find((option) => !option.disabled);
+      if (next) selectOption(next.value);
     }
-  });
+
+    if (event.key === 'ArrowUp' && open) {
+      event.preventDefault();
+      const currentIndex = options.findIndex((option) => option.value === selectedValue);
+      const previous = options
+        .slice(0, currentIndex)
+        .reverse()
+        .find((option) => !option.disabled);
+      if (previous) selectOption(previous.value);
+    }
+  }
 
   return (
-    <select
-      ref={selectRef}
-      {...props}
-      style={{ ...props.style, display: 'none' }}
-      aria-hidden="true"
-    />
+    <div
+      ref={rootRef}
+      className={`nice-select-root ${open ? 'open' : ''}`}
+      {...rest}
+    >
+      <div
+        className={`nice-select input ${open ? 'open' : ''} ${disabled ? 'disabled' : ''} ${className}`}
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        onClick={() => !disabled && setOpen((current) => !current)}
+        onKeyDown={handleKeyDown}
+      >
+        <span className="current">
+          {selectedOption?.label || ''}
+        </span>
+
+        {open && !disabled && (
+          <ul className="list" role="listbox">
+            {options.map((option) => (
+              <li
+                key={option.value}
+                className={`option ${option.value === selectedValue ? 'selected' : ''} ${option.disabled ? 'disabled' : ''}`}
+                role="option"
+                aria-selected={option.value === selectedValue}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  selectOption(option.value);
+                }}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
