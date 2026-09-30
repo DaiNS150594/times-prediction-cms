@@ -971,3 +971,8 @@ body:after{
 @media(max-width:650px){
   .event-subtitle-display{padding:10px 12px}
 }
+
+.event-subtitle-create{grid-column:1 / -1;display:flex;flex-direction:column;gap:7px}
+.event-subtitle-create label{font-size:13px;font-weight:700;color:#c9d8e4}
+.event-subtitle-create textarea{resize:vertical;min-height:76px;line-height:1.5}
+@media(max-width:650px){.event-subtitle-create{grid-column:auto}}
