@@ -287,6 +287,12 @@ export default function Home() {
             <span>{active?.title || 'Chưa có sự kiện đang mở'}</span>
           </h2>
           {active?.event_date && <p className="muted">Thời gian: {new Date(active.event_date).toLocaleString('vi-VN')}</p>}
+          {active?.subtitle && (
+            <div className="event-subtitle-display">
+              <div className="event-subtitle-label">Thành viên thi đấu</div>
+              <div className="event-subtitle-text">{active.subtitle}</div>
+            </div>
+          )}
           {active?.event_link && (
             <a className="event-live-link" href={active.event_link} target="_blank" rel="noreferrer">
               <span className="event-live-link-dot"></span>
