@@ -14,6 +14,7 @@ create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   event_date timestamptz,
+  event_link text,
   actual_result numeric,
   status text not null default 'active' check(status in ('active','closed')),
   created_at timestamptz default now()
