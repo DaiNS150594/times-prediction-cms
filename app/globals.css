@@ -951,3 +951,23 @@ body:after{
   .admin-event-link-controls{max-width:none;flex-direction:column}
   .admin-event-link-controls .input,.admin-event-link-controls .btn{width:100%}
 }
+
+.event-subtitle-display{
+  margin:12px 0 4px;padding:12px 14px;border:1px solid rgba(171,207,232,.14);
+  border-radius:12px;background:rgba(3,18,31,.28);
+}
+.event-subtitle-label{
+  margin-bottom:5px;color:#dbeaf3;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+}
+.event-subtitle-text{
+  color:#a9c0ce;font-size:14px;line-height:1.55;white-space:pre-line;
+}
+.event-subtitle-input{resize:vertical;min-height:82px;line-height:1.5}
+.admin-event-subtitle-box{
+  display:flex;flex-direction:column;gap:9px;margin:0 0 16px;padding:14px 16px;
+  border:1px solid rgba(171,207,232,.16);border-radius:14px;background:rgba(3,18,31,.34);
+}
+.admin-event-subtitle-box .input{width:100%}
+@media(max-width:650px){
+  .event-subtitle-display{padding:10px 12px}
+}
