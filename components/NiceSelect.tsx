@@ -7,6 +7,8 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
+  type KeyboardEvent,
   type SelectHTMLAttributes,
 } from 'react';
 
@@ -19,7 +21,6 @@ export default function NiceSelect({
   onChange,
   className = '',
   disabled,
-  ...rest
 }: NiceSelectProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -62,13 +63,15 @@ export default function NiceSelect({
 
     setOpen(false);
 
-    onChange?.({
-      target: { value: nextValue } as HTMLSelectElement,
-      currentTarget: { value: nextValue } as HTMLSelectElement,
-    } as React.ChangeEvent<HTMLSelectElement>);
+    const changeEvent = {
+      target: { value: nextValue },
+      currentTarget: { value: nextValue },
+    } as unknown as ChangeEvent<HTMLSelectElement>;
+
+    onChange?.(changeEvent);
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (disabled) return;
 
     if (event.key === 'Escape') {
@@ -79,16 +82,19 @@ export default function NiceSelect({
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       setOpen((current) => !current);
+      return;
     }
 
-    if (event.key === 'ArrowDown' && open) {
+    if (!open) return;
+
+    if (event.key === 'ArrowDown') {
       event.preventDefault();
       const currentIndex = options.findIndex((option) => option.value === selectedValue);
       const next = options.slice(currentIndex + 1).find((option) => !option.disabled);
       if (next) selectOption(next.value);
     }
 
-    if (event.key === 'ArrowUp' && open) {
+    if (event.key === 'ArrowUp') {
       event.preventDefault();
       const currentIndex = options.findIndex((option) => option.value === selectedValue);
       const previous = options
@@ -100,11 +106,7 @@ export default function NiceSelect({
   }
 
   return (
-    <div
-      ref={rootRef}
-      className={`nice-select-root ${open ? 'open' : ''}`}
-      {...rest}
-    >
+    <div ref={rootRef} className="nice-select-root">
       <div
         className={`nice-select input ${open ? 'open' : ''} ${disabled ? 'disabled' : ''} ${className}`}
         role="combobox"
@@ -115,9 +117,7 @@ export default function NiceSelect({
         onClick={() => !disabled && setOpen((current) => !current)}
         onKeyDown={handleKeyDown}
       >
-        <span className="current">
-          {selectedOption?.label || ''}
-        </span>
+        <span className="current">{selectedOption?.label || ''}</span>
 
         {open && !disabled && (
           <ul className="list" role="listbox">
