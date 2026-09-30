@@ -421,6 +421,17 @@ export default function Admin() {
               <input className="input" required placeholder="Tên sự kiện" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className="input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
               <input className="input event-link-input" type="url" placeholder="Link sự kiện đang diễn ra" value={eventLink} onChange={(e) => setEventLink(e.target.value)} />
+              <div className="event-subtitle-create">
+                <label htmlFor="event-subtitle">Thành viên thi đấu</label>
+                <textarea
+                  id="event-subtitle"
+                  className="input"
+                  rows={3}
+                  placeholder="Nhập danh sách thành viên thi đấu"
+                  value={eventSubtitle}
+                  onChange={(e) => setEventSubtitle(e.target.value)}
+                />
+              </div>
               <button className="btn">Tạo bảng</button>
             </form>
           )}
