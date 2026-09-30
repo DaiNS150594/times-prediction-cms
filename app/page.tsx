@@ -295,9 +295,8 @@ export default function Home() {
           )}
           {active?.event_link && (
             <a className="event-live-link" href={active.event_link} target="_blank" rel="noreferrer">
-              <span className="event-live-link-dot"></span>
-              <span>Tham gia sự kiện đang diễn ra</span>
-              <span className="event-live-link-arrow">↗</span>
+              <span>Xem sự kiện đang diễn ra</span>
+              <img className="event-live-link-icon" src="/live.svg" alt="LIVE" />
             </a>
           )}
 
