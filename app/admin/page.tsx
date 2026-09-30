@@ -19,6 +19,7 @@ export default function Admin() {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [eventLink, setEventLink] = useState('');
+  const [eventSubtitle, setEventSubtitle] = useState('');
   const [resultNumber, setResultNumber] = useState('');
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
@@ -44,6 +45,7 @@ export default function Admin() {
     setEvents(e || []);
     const nextActive = (e || []).find((event: Event) => event.status === 'active');
     setEventLink(nextActive?.event_link || '');
+    setEventSubtitle(nextActive?.subtitle || '');
     setPreds((p as any) || []);
   }
 
@@ -296,6 +298,7 @@ export default function Admin() {
       title,
       event_date: date ? new Date(date).toISOString() : null,
       event_link: nextLink || null,
+      subtitle: eventSubtitle.trim() || null,
       status: 'active',
     });
     if (error) {
@@ -446,6 +449,35 @@ export default function Admin() {
                   <input className="input" type="url" placeholder="https://..." value={eventLink} onChange={(e) => setEventLink(e.target.value)} />
                   <button className="btn compact" type="submit">Cập nhật link</button>
                 </form>
+              </div>
+
+              <div className="admin-event-subtitle-box">
+                <div className="admin-event-status-title">Thành viên thi đấu</div>
+                <textarea
+                  className="input"
+                  rows={3}
+                  placeholder="Nhập danh sách thành viên thi đấu"
+                  value={eventSubtitle}
+                  onChange={(e) => setEventSubtitle(e.target.value)}
+                />
+                <button
+                  className="btn compact"
+                  type="button"
+                  onClick={async () => {
+                    if (!active) return;
+                    const { error } = await supabase
+                      .from('events')
+                      .update({ subtitle: eventSubtitle.trim() || null })
+                      .eq('id', active.id);
+                    if (error) {
+                      alert('Không thể cập nhật thành viên thi đấu: ' + error.message);
+                      return;
+                    }
+                    load();
+                  }}
+                >
+                  Cập nhật
+                </button>
               </div>
 
               <div className="admin-event-status">
