@@ -18,6 +18,7 @@ export default function Admin() {
   const [pin, setPin] = useState('');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
+  const [eventLink, setEventLink] = useState('');
   const [resultNumber, setResultNumber] = useState('');
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
@@ -41,6 +42,8 @@ export default function Admin() {
     ]);
     setUsers(u || []);
     setEvents(e || []);
+    const nextActive = (e || []).find((event: Event) => event.status === 'active');
+    setEventLink(nextActive?.event_link || '');
     setPreds((p as any) || []);
   }
 
@@ -283,9 +286,25 @@ export default function Admin() {
   async function createEvent(e: any) {
     e.preventDefault();
     if (active) await supabase.from('events').update({ status: 'closed' }).eq('id', active.id);
-    await supabase.from('events').insert({ title, event_date: date ? new Date(date).toISOString() : null, status: 'active' });
+    const nextLink = eventLink.trim();
+    if (nextLink && !/^https?:\/\//i.test(nextLink)) {
+      alert('Link sự kiện phải bắt đầu bằng http:// hoặc https://');
+      return;
+    }
+
+    const { error } = await supabase.from('events').insert({
+      title,
+      event_date: date ? new Date(date).toISOString() : null,
+      event_link: nextLink || null,
+      status: 'active',
+    });
+    if (error) {
+      alert('Không thể tạo sự kiện: ' + error.message);
+      return;
+    }
     setTitle('');
     setDate('');
+    setEventLink('');
     load();
   }
 
@@ -398,11 +417,37 @@ export default function Admin() {
             <form className="form two" onSubmit={createEvent}>
               <input className="input" required placeholder="Tên sự kiện" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className="input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+              <input className="input event-link-input" type="url" placeholder="Link sự kiện đang diễn ra" value={eventLink} onChange={(e) => setEventLink(e.target.value)} />
               <button className="btn">Tạo bảng</button>
             </form>
           )}
           {active && (
             <>
+              <div className="admin-event-link-box">
+                <div>
+                  <div className="admin-event-status-title">Link sự kiện đang diễn ra</div>
+                  <div className="muted">Admin có thể thay đổi link bất cứ lúc nào trong khi sự kiện đang mở.</div>
+                </div>
+                <form className="admin-event-link-controls" onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!active) return;
+                  const nextLink = eventLink.trim();
+                  if (nextLink && !/^https?:\/\//i.test(nextLink)) {
+                    alert('Link sự kiện phải bắt đầu bằng http:// hoặc https://');
+                    return;
+                  }
+                  const { error } = await supabase.from('events').update({ event_link: nextLink || null }).eq('id', active.id);
+                  if (error) {
+                    alert('Không thể cập nhật link sự kiện: ' + error.message);
+                    return;
+                  }
+                  load();
+                }}>
+                  <input className="input" type="url" placeholder="https://..." value={eventLink} onChange={(e) => setEventLink(e.target.value)} />
+                  <button className="btn compact" type="submit">Cập nhật link</button>
+                </form>
+              </div>
+
               <div className="admin-event-status">
                 <div>
                   <div className="admin-event-status-title">Người chơi tự nhập dự đoán</div>
