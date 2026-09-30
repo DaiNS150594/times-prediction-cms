@@ -272,19 +272,14 @@ export default function Home() {
           <span>Dự đoán</span>
         </a>
         <a className={'tab ' + (tab === 'users' ? 'active' : '')} href="#users" aria-label="Người tham gia">
-          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v9M7.5 12h9" /></svg>
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20c.7-3.5 3-5.5 6.5-5.5s5.8 2 6.5 5.5" /><path d="M18 8.5a2.7 2.7 0 0 1 2.5 2.7M19.5 15.5c1.1.6 1.8 1.6 2.1 3" /></svg>
           <span>Người chơi</span>
         </a>
         <a className={'tab ' + (tab === 'history' ? 'active' : '')} href="#history" aria-label="Lịch sử">
-          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3 2" /></svg>
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5h14M5 12h14M5 16.5h9" /><circle cx="18.2" cy="16.4" r="3.1" /><path d="M18.2 14.7v1.9l1.2.8" /></svg>
           <span>Lịch sử</span>
         </a>
-        <a className="tab tab-admin" href="/admin" aria-label="CMS Admin">
-          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M9.5 12.5 11 14l3.8-4M8 17.5h8" /></svg>
-          <span>Admin</span>
-        </a>
       </nav>
-
       {tab === 'current' && (
         <section className="panel">
           <h2 className={'section-title ' + (active ? 'status-live' : 'status-offline')}>
