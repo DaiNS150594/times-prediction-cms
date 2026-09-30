@@ -267,14 +267,21 @@ export default function Home() {
       </header>
 
       <nav className="tabs" aria-label="Các khu vực">
-        <a className={'tab ' + (tab === 'current' ? 'active' : '')} href="#current">
-          Dự đoán hiện tại
+        <a className={'tab ' + (tab === 'current' ? 'active' : '')} href="#current" aria-label="Dự đoán hiện tại">
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 3l8 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-3v6h-5A1.5 1.5 0 0 1 4 19.5z" /></svg>
+          <span>Dự đoán</span>
         </a>
-        <a className={'tab ' + (tab === 'users' ? 'active' : '')} href="#users">
-          Người tham gia
+        <a className={'tab ' + (tab === 'users' ? 'active' : '')} href="#users" aria-label="Người tham gia">
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v9M7.5 12h9" /></svg>
+          <span>Người chơi</span>
         </a>
-        <a className={'tab ' + (tab === 'history' ? 'active' : '')} href="#history">
-          Lịch sử
+        <a className={'tab ' + (tab === 'history' ? 'active' : '')} href="#history" aria-label="Lịch sử">
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3 2" /></svg>
+          <span>Lịch sử</span>
+        </a>
+        <a className="tab tab-admin" href="/admin" aria-label="CMS Admin">
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M9.5 12.5 11 14l3.8-4M8 17.5h8" /></svg>
+          <span>Admin</span>
         </a>
       </nav>
 
