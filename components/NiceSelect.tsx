@@ -83,12 +83,9 @@ export default function NiceSelect(props: NiceSelectProps) {
 
     return () => {
       mounted = false;
-      if (jqueryRef.current && selectRef.current) {
-        const $select = jqueryRef.current(selectRef.current) as any;
-        if ($select.next('.nice-select').length && $select.niceSelect) {
-          $select.niceSelect('destroy');
-        }
-      }
+      // React removes the select node on unmount. Do not destroy Nice Select here,
+      // because its destroy method restores the native select and can cause a flash
+      // during React Strict Mode effect re-runs.
     };
   }, []);
 
@@ -102,8 +99,11 @@ export default function NiceSelect(props: NiceSelectProps) {
   });
 
   return (
-    <>
-      <select ref={selectRef} {...props} />
-    </>
+    <select
+      ref={selectRef}
+      {...props}
+      style={{ ...props.style, display: 'none' }}
+      aria-hidden="true"
+    />
   );
 }
