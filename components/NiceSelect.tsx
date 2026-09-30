@@ -13,11 +13,12 @@ export default function NiceSelect(props: NiceSelectProps) {
 
     async function init() {
       const jqueryModule = await import('jquery');
-      await import('jquery-nice-select');
-
       if (!mounted || !selectRef.current) return;
 
       const $ = jqueryModule.default;
+      (window as any).jQuery = $;
+      (window as any).$ = $;
+      await import('jquery-nice-select');
       jqueryRef.current = $;
 
       const $select = $(selectRef.current) as any;
