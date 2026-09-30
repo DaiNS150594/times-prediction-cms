@@ -937,8 +937,7 @@ body:after{
   transition:.18s ease;
 }
 .event-live-link:hover{border-color:rgba(255,130,85,.62);background:rgba(255,71,61,.14);transform:translateY(-1px)}
-.event-live-link-dot{width:7px;height:7px;border-radius:50%;background:#35e891;box-shadow:0 0 0 4px rgba(53,232,145,.12),0 0 12px rgba(53,232,145,.55)}
-.event-live-link-arrow{font-size:16px;line-height:1}
+.event-live-link-icon{width:34px;height:34px;display:block;flex:0 0 34px;border-radius:8px;object-fit:cover}
 .admin-event-link-box{
   display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 16px;padding:14px 16px;
   border:1px solid rgba(171,207,232,.16);border-radius:14px;background:rgba(3,18,31,.34);
