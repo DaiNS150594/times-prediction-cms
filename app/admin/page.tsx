@@ -34,6 +34,8 @@ export default function Admin() {
   const [editingPredictionValue, setEditingPredictionValue] = useState('');
   const [editingEventTitle, setEditingEventTitle] = useState(false);
   const [eventTitleDraft, setEventTitleDraft] = useState('');
+  const [editingEventDate, setEditingEventDate] = useState(false);
+  const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -69,7 +71,7 @@ export default function Admin() {
 
   if (!session) {
     return (
-      <main className="wrap">
+      <main className="wrap admin-page">
         <section className="panel login">
           <h1 className="section-title">FAM - TIMES CMS</h1>
           <form className="form" onSubmit={login}>
@@ -208,6 +210,34 @@ export default function Admin() {
     }
 
     cancelEditEventTitle();
+    load();
+  }
+
+  function startEditEventDate() {
+    if (!active) return;
+    setEventDateDraft(active.event_date ? new Date(active.event_date).toISOString().slice(0, 16) : '');
+    setEditingEventDate(true);
+  }
+
+  function cancelEditEventDate() {
+    setEditingEventDate(false);
+    setEventDateDraft('');
+  }
+
+  async function saveEventDate() {
+    if (!active) return;
+    const nextDate = eventDateDraft ? new Date(eventDateDraft).toISOString() : null;
+    const { error } = await supabase
+      .from('events')
+      .update({ event_date: nextDate })
+      .eq('id', active.id);
+
+    if (error) {
+      alert('Không thể cập nhật thời gian: ' + error.message);
+      return;
+    }
+
+    cancelEditEventDate();
     load();
   }
 
@@ -385,32 +415,50 @@ export default function Admin() {
         <section className="panel">
           {active ? (
             <div className="admin-event-heading">
-              {editingEventTitle ? (
-                <div className="admin-event-title-editor">
-                  <input
-                    className="input"
-                    value={eventTitleDraft}
-                    onChange={(e) => setEventTitleDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveEventTitle();
-                      if (e.key === 'Escape') cancelEditEventTitle();
-                    }}
-                    autoFocus
-                  />
-                  <button className="btn compact" type="button" onClick={saveEventTitle}>
-                    Lưu
-                  </button>
-                  <button className="btn ghost compact" type="button" onClick={cancelEditEventTitle}>
-                    Hủy
-                  </button>
-                </div>
-              ) : (
-                <>
+              <div className="admin-event-heading-main">
+                {editingEventTitle ? (
+                  <div className="admin-event-title-editor">
+                    <input
+                      className="input"
+                      value={eventTitleDraft}
+                      onChange={(e) => setEventTitleDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveEventTitle();
+                        if (e.key === 'Escape') cancelEditEventTitle();
+                      }}
+                      autoFocus
+                    />
+                    <button className="btn compact" type="button" onClick={saveEventTitle}>Lưu</button>
+                    <button className="btn ghost compact" type="button" onClick={cancelEditEventTitle}>Hủy</button>
+                  </div>
+                ) : (
                   <h2 className="section-title admin-event-title">Đang mở: {active.title}</h2>
-                  <button className="btn ghost compact admin-event-title-edit" type="button" onClick={startEditEventTitle}>
-                    Sửa tên
-                  </button>
-                </>
+                )}
+                {editingEventDate ? (
+                  <div className="admin-event-date-editor">
+                    <input
+                      className="input admin-event-date-input"
+                      type="datetime-local"
+                      value={eventDateDraft}
+                      onChange={(e) => setEventDateDraft(e.target.value)}
+                      autoFocus
+                    />
+                    <button className="btn compact" type="button" onClick={saveEventDate}>Lưu</button>
+                    <button className="btn ghost compact" type="button" onClick={cancelEditEventDate}>Hủy</button>
+                  </div>
+                ) : (
+                  <div className="admin-event-date-row">
+                    <span>{active.event_date ? new Date(active.event_date).toLocaleString('vi-VN') : 'Chưa đặt thời gian'}</span>
+                    <button className="btn ghost compact admin-event-title-edit" type="button" onClick={startEditEventDate}>
+                      Sửa thời gian
+                    </button>
+                  </div>
+                )}
+              </div>
+              {!editingEventTitle && (
+                <button className="btn ghost compact admin-event-title-edit" type="button" onClick={startEditEventTitle}>
+                  Sửa tên
+                </button>
               )}
             </div>
           ) : (
