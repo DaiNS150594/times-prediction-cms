@@ -390,7 +390,8 @@ export default function Admin() {
   }
 
   return (
-        {editingUserId && (
+    <>
+      {editingUserId && (
         <div className="mobile-user-edit-backdrop" role="dialog" aria-modal="true" aria-label="Sửa thành viên">
           <div className="mobile-user-edit-modal">
             <div className="mobile-user-edit-heading">
@@ -423,7 +424,7 @@ export default function Admin() {
           </div>
         </div>
       )}
-    <main className="wrap admin-page">
+      <main className="wrap admin-page">
       <div className="topbar">
         <h1 className="section-title">FAM - TIMES CMS</h1>
         <div className="row">
@@ -970,6 +971,7 @@ export default function Admin() {
           </table>
         </section>
       )}
-    </main>
+      </main>
+    </>
   );
 }
