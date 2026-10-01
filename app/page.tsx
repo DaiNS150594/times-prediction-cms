@@ -421,21 +421,18 @@ export default function Home() {
                 <div className="prediction-number-row" key={group.number}>
                   <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
                   <div className="prediction-number-avatars">
-                    {group.predictions.map((p) => {
-                      const tooltip = p.users?.nickname
-                        ? (p.users?.name || '') + ' • ' + p.users.nickname
-                        : p.users?.name || 'Người tham gia';
-
-                      return (
-                        <span className="prediction-avatar-tooltip" data-tooltip={tooltip} key={p.id} tabIndex={0}>
-                          <img
-                            className="prediction-number-avatar"
-                            src={p.users?.avatar_url || '/avatar.svg'}
-                            alt={p.users?.name || 'Avatar'}
-                          />
+                    {group.predictions.map((p) => (
+                      <div className="prediction-number-person" key={p.id}>
+                        <img
+                          className="prediction-number-avatar"
+                          src={p.users?.avatar_url || '/avatar.svg'}
+                          alt={p.users?.name || 'Avatar'}
+                        />
+                        <span className="prediction-number-person-name">
+                          {p.users?.name || 'Người tham gia'}
                         </span>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                   <div className="prediction-number-count">{group.predictions.length} người</div>
                 </div>
