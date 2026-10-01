@@ -1118,3 +1118,291 @@ body:after{
     flex-basis:28px;
   }
 }
+
+
+/* ===== Prediction-by-number layout: shared frontend + admin ===== */
+.prediction-number-list{
+  display:grid;
+  gap:0;
+  margin-top:4px;
+  border-top:1px solid rgba(171,207,232,.16);
+}
+.prediction-number-row{
+  min-height:48px;
+  display:grid;
+  grid-template-columns:50px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:5px 4px;
+  border:0;
+  border-bottom:1px solid rgba(171,207,232,.16);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.prediction-number-label{
+  width:36px;
+  height:30px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#ff174f,#ff8a23);
+  color:#fff;
+  font-weight:900;
+  font-size:16px;
+  box-shadow:0 5px 12px rgba(255,75,48,.14);
+}
+.prediction-number-avatars{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px 14px;
+}
+.prediction-number-person{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.prediction-number-person-name{
+  color:#d9e5ed;
+  font-size:13px;
+  line-height:1.2;
+  white-space:nowrap;
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.prediction-number-person .prediction-number-avatar{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  border-width:1.5px;
+}
+.prediction-number-person:hover .prediction-number-avatar,
+.prediction-number-person.selected .prediction-number-avatar{
+  transform:scale(1.06);
+  box-shadow:0 0 0 2px rgba(255,105,54,.25),0 5px 14px rgba(0,0,0,.22);
+}
+.prediction-number-count{
+  color:#7f95a5;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+/* Remove the old tooltip behavior completely. */
+.prediction-avatar-tooltip:after,
+.prediction-avatar-tooltip:hover:after,
+.prediction-avatar-tooltip:focus:after{
+  display:none !important;
+}
+
+/* Admin user cards are clickable on mobile for editing. */
+.admin-page .user-card:not(.editing){
+  cursor:pointer;
+}
+.admin-page .user-card:not(.editing):hover{
+  transform:translateY(-1px);
+}
+
+/* Mobile admin header/section spacing: deliberately column-based. */
+@media(max-width:650px){
+  .admin-page{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .admin-page .topbar{
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:8px;
+  }
+  .admin-page .topbar .section-title{
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    text-align:center;
+    margin:0;
+  }
+  .admin-page .topbar .section-title::after{
+    position:static;
+    margin-top:2px;
+  }
+  .admin-page .topbar .row{
+    width:100%;
+    justify-content:center;
+    gap:10px;
+  }
+  .admin-page .panel > .section-title,
+  .admin-page .admin-event-title{
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+    gap:6px;
+  }
+  .admin-page .admin-event-heading{
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+
+  /* Compact number list like the supplied reference. */
+  .prediction-number-row{
+    min-height:40px;
+    grid-template-columns:40px minmax(0,1fr);
+    gap:6px;
+    padding:4px 2px;
+  }
+  .prediction-number-label{
+    width:34px;
+    height:30px;
+    font-size:16px;
+    border-radius:8px;
+  }
+  .prediction-number-avatars{
+    gap:4px 10px;
+  }
+  .prediction-number-person{
+    gap:5px;
+    max-width:100%;
+  }
+  .prediction-number-person .prediction-number-avatar{
+    width:28px;
+    height:28px;
+    flex-basis:28px;
+  }
+  .prediction-number-person-name{
+    font-size:12px;
+    max-width:92px;
+  }
+  .prediction-number-count{display:none}
+
+  /* User cards: avatar -> name -> nickname in a vertical stack. */
+  .admin-page .user-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .admin-page .user-grid .user-card:not(.editing){
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:7px;
+    min-height:124px;
+    padding:12px 8px;
+  }
+  .admin-page .user-grid .user-card:not(.editing) .avatar{
+    width:54px;
+    height:54px;
+    margin:0;
+  }
+  .admin-page .user-grid .user-card:not(.editing) .user-card-body{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+  }
+  .admin-page .user-grid .user-card:not(.editing) .user-card-actions{
+    display:none;
+  }
+
+  /* Mobile user edit popup. */
+  .mobile-user-edit-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:7000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(1,8,14,.78);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .mobile-user-edit-modal{
+    width:min(100%,390px);
+    max-height:calc(100dvh - 36px);
+    overflow:auto;
+    padding:18px;
+    border:1px solid rgba(171,207,232,.25);
+    border-radius:20px;
+    background:linear-gradient(145deg,rgba(10,34,53,.98),rgba(4,19,32,.98));
+    box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .mobile-user-edit-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .mobile-user-edit-kicker{
+    color:#ff9a3d;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.1em;
+  }
+  .mobile-user-edit-heading h2{
+    margin:3px 0 0;
+    font-size:21px;
+  }
+  .mobile-user-edit-close{
+    width:34px;
+    height:34px;
+    border:1px solid rgba(171,207,232,.2);
+    border-radius:10px;
+    background:rgba(255,255,255,.04);
+    color:#fff;
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .mobile-user-edit-avatar{
+    display:block;
+    width:72px;
+    height:72px;
+    margin:4px auto 14px;
+    object-fit:cover;
+    border-radius:50%;
+    border:2px solid rgba(255,125,54,.9);
+    box-shadow:0 0 0 4px rgba(255,94,47,.08);
+  }
+  .mobile-user-edit-form{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+  }
+  .mobile-user-edit-actions{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .mobile-user-edit-actions .btn{
+    flex:1;
+  }
+
+  /* Hide the old inline editor on mobile; the popup replaces it. */
+  .admin-page .user-card.editing{
+    display:none;
+  }
+}
+
+/* Popup exists only as the mobile editing UI. */
+@media(min-width:651px){
+  .mobile-user-edit-backdrop{
+    display:none;
+  }
+}
