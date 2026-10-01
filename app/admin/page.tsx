@@ -927,7 +927,8 @@ export default function Admin() {
       {tab === 'history' && (
         <section className="panel">
           <h2 className="section-title">Lịch sử sự kiện</h2>
-          <table className="table">
+          <div className="history-table-wrap">
+            <table className="table history-table">
             <thead>
               <tr>
                 <th>Sự kiện</th>
@@ -997,7 +998,8 @@ export default function Admin() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </section>
       )}
       </main>
