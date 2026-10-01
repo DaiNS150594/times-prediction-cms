@@ -1122,13 +1122,16 @@ body:after{
 
 /* ===== Prediction-by-number layout: shared frontend + admin ===== */
 .prediction-number-list{
-  display:grid;
+  display:flex;
+  flex-direction:column;
   gap:0;
   margin-top:4px;
+  width:100%;
   border-top:1px solid rgba(171,207,232,.16);
 }
 .prediction-number-row{
   min-height:48px;
+  width:100%;
   display:grid;
   grid-template-columns:50px minmax(0,1fr) auto;
   align-items:center;
@@ -1157,23 +1160,25 @@ body:after{
   display:flex;
   align-items:center;
   flex-wrap:wrap;
-  gap:5px 14px;
+  gap:5px 8px;
 }
 .prediction-number-person{
   display:inline-flex;
   align-items:center;
   gap:6px;
   min-width:0;
-  padding:0;
+  min-height:36px;
+  padding:3px 10px 3px 4px;
   border:0;
-  background:transparent;
+  border-radius:15px;
+  background:rgba(45,102,146,.58);
   color:inherit;
   font:inherit;
   text-align:left;
   cursor:pointer;
 }
 .prediction-number-person-name{
-  color:#d9e5ed;
+  color:#fff;
   font-size:13px;
   line-height:1.2;
   white-space:nowrap;
@@ -1187,9 +1192,13 @@ body:after{
   flex:0 0 30px;
   border-width:1.5px;
 }
+.prediction-number-person:hover,
+.prediction-number-person.selected{
+  background:rgba(45,102,146,.72);
+}
 .prediction-number-person:hover .prediction-number-avatar,
 .prediction-number-person.selected .prediction-number-avatar{
-  transform:scale(1.06);
+  transform:scale(1.04);
   box-shadow:0 0 0 2px rgba(255,105,54,.25),0 5px 14px rgba(0,0,0,.22);
 }
 .prediction-number-count{
@@ -1197,8 +1206,6 @@ body:after{
   font-size:11px;
   white-space:nowrap;
 }
-
-/* Remove the old tooltip behavior completely. */
 .prediction-avatar-tooltip:after,
 .prediction-avatar-tooltip:hover:after,
 .prediction-avatar-tooltip:focus:after{
@@ -1257,7 +1264,7 @@ body:after{
     gap:8px;
   }
 
-  /* Compact number list like the supplied reference. */
+  /* Prediction-by-number: compact reference layout on phones. */
   .prediction-number-row{
     min-height:40px;
     grid-template-columns:40px minmax(0,1fr);
@@ -1270,11 +1277,12 @@ body:after{
     font-size:16px;
     border-radius:8px;
   }
-  .prediction-number-avatars{
-    gap:4px 10px;
-  }
+  .prediction-number-avatars{gap:4px 6px}
   .prediction-number-person{
     gap:5px;
+    min-height:34px;
+    padding:2px 9px 2px 4px;
+    border-radius:15px;
     max-width:100%;
   }
   .prediction-number-person .prediction-number-avatar{
@@ -1284,7 +1292,7 @@ body:after{
   }
   .prediction-number-person-name{
     font-size:12px;
-    max-width:92px;
+    max-width:110px;
   }
   .prediction-number-count{display:none}
 
