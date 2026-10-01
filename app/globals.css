@@ -1394,12 +1394,16 @@ body:after{
     gap:9px;
   }
   .mobile-user-edit-actions{
-    display:flex;
+    display:grid;
+    grid-template-columns:1fr 1fr;
     gap:8px;
     margin-top:12px;
   }
   .mobile-user-edit-actions .btn{
-    flex:1;
+    width:100%;
+  }
+  .mobile-user-edit-actions .btn:nth-child(3){
+    grid-column:1 / -1;
   }
 
   /* Hide the old inline editor on mobile; the popup replaces it. */
