@@ -71,39 +71,7 @@ export default function Admin() {
 
   if (!session) {
     return (
-        {editingUserId && (
-        <div className="mobile-user-edit-backdrop" role="dialog" aria-modal="true" aria-label="Sửa thành viên">
-          <div className="mobile-user-edit-modal">
-            <div className="mobile-user-edit-heading">
-              <div>
-                <div className="mobile-user-edit-kicker">THÀNH VIÊN</div>
-                <h2>Sửa thông tin</h2>
-              </div>
-              <button className="mobile-user-edit-close" type="button" onClick={cancelEditUser} aria-label="Đóng">×</button>
-            </div>
-            <img className="mobile-user-edit-avatar" src={editUserAvatar || '/avatar.svg'} alt={editUserName || 'Avatar'} />
-            <div className="mobile-user-edit-form">
-              <input className="input" placeholder="Tên" value={editUserName} onChange={(e) => setEditUserName(e.target.value)} />
-              <input className="input" placeholder="Nickname" value={editUserNick} onChange={(e) => setEditUserNick(e.target.value)} />
-              <input className="input" placeholder="URL avatar" value={editUserAvatar} onChange={(e) => setEditUserAvatar(e.target.value)} />
-              <input
-                className="input pin-admin-input"
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                pattern="\d{4}"
-                placeholder="PIN 4 số"
-                value={editUserPin}
-                onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              />
-            </div>
-            <div className="mobile-user-edit-actions">
-              <button className="btn compact" type="button" onClick={() => updateUser(editingUserId)}>Lưu thay đổi</button>
-              <button className="btn ghost compact" type="button" onClick={cancelEditUser}>Hủy</button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
     <main className="wrap admin-page">
         <section className="panel login">
@@ -422,6 +390,39 @@ export default function Admin() {
   }
 
   return (
+        {editingUserId && (
+        <div className="mobile-user-edit-backdrop" role="dialog" aria-modal="true" aria-label="Sửa thành viên">
+          <div className="mobile-user-edit-modal">
+            <div className="mobile-user-edit-heading">
+              <div>
+                <div className="mobile-user-edit-kicker">THÀNH VIÊN</div>
+                <h2>Sửa thông tin</h2>
+              </div>
+              <button className="mobile-user-edit-close" type="button" onClick={cancelEditUser} aria-label="Đóng">×</button>
+            </div>
+            <img className="mobile-user-edit-avatar" src={editUserAvatar || '/avatar.svg'} alt={editUserName || 'Avatar'} />
+            <div className="mobile-user-edit-form">
+              <input className="input" placeholder="Tên" value={editUserName} onChange={(e) => setEditUserName(e.target.value)} />
+              <input className="input" placeholder="Nickname" value={editUserNick} onChange={(e) => setEditUserNick(e.target.value)} />
+              <input className="input" placeholder="URL avatar" value={editUserAvatar} onChange={(e) => setEditUserAvatar(e.target.value)} />
+              <input
+                className="input pin-admin-input"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                pattern="\d{4}"
+                placeholder="PIN 4 số"
+                value={editUserPin}
+                onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
+            </div>
+            <div className="mobile-user-edit-actions">
+              <button className="btn compact" type="button" onClick={() => updateUser(editingUserId)}>Lưu thay đổi</button>
+              <button className="btn ghost compact" type="button" onClick={cancelEditUser}>Hủy</button>
+            </div>
+          </div>
+        </div>
+      )}
     <main className="wrap admin-page">
       <div className="topbar">
         <h1 className="section-title">FAM - TIMES CMS</h1>
