@@ -785,7 +785,10 @@ export default function Admin() {
 
       {tab === 'users' && (
         <section className="panel">
-          <h2 className="section-title">Danh sách người tham gia</h2>
+          <h2 className="section-title admin-user-list-title">
+            <span>Danh sách người tham gia</span>
+            <span className="admin-user-count">Tổng: {users.length} thành viên</span>
+          </h2>
           <form className="form two" onSubmit={addUser}>
             <input className="input" required placeholder="Tên" value={name} onChange={(e) => setName(e.target.value)} />
             <input className="input" placeholder="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} />
