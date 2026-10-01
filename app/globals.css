@@ -1076,6 +1076,8 @@ body:after{
     max-width:100px;
   }
 
+  .tabs .tab-icon{display:block}
+
   /* User CRUD remains available on mobile. */
   .admin-page .user-card-actions{
     display:flex;
