@@ -71,7 +71,41 @@ export default function Admin() {
 
   if (!session) {
     return (
-      <main className="wrap admin-page">
+        {editingUserId && (
+        <div className="mobile-user-edit-backdrop" role="dialog" aria-modal="true" aria-label="Sửa thành viên">
+          <div className="mobile-user-edit-modal">
+            <div className="mobile-user-edit-heading">
+              <div>
+                <div className="mobile-user-edit-kicker">THÀNH VIÊN</div>
+                <h2>Sửa thông tin</h2>
+              </div>
+              <button className="mobile-user-edit-close" type="button" onClick={cancelEditUser} aria-label="Đóng">×</button>
+            </div>
+            <img className="mobile-user-edit-avatar" src={editUserAvatar || '/avatar.svg'} alt={editUserName || 'Avatar'} />
+            <div className="mobile-user-edit-form">
+              <input className="input" placeholder="Tên" value={editUserName} onChange={(e) => setEditUserName(e.target.value)} />
+              <input className="input" placeholder="Nickname" value={editUserNick} onChange={(e) => setEditUserNick(e.target.value)} />
+              <input className="input" placeholder="URL avatar" value={editUserAvatar} onChange={(e) => setEditUserAvatar(e.target.value)} />
+              <input
+                className="input pin-admin-input"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                pattern="\d{4}"
+                placeholder="PIN 4 số"
+                value={editUserPin}
+                onChange={(e) => setEditUserPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
+            </div>
+            <div className="mobile-user-edit-actions">
+              <button className="btn compact" type="button" onClick={() => updateUser(editingUserId)}>Lưu thay đổi</button>
+              <button className="btn ghost compact" type="button" onClick={cancelEditUser}>Hủy</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    <main className="wrap admin-page">
         <section className="panel login">
           <h1 className="section-title">FAM - TIMES CMS</h1>
           <form className="form" onSubmit={login}>
@@ -388,7 +422,7 @@ export default function Admin() {
   }
 
   return (
-    <main className="wrap">
+    <main className="wrap admin-page">
       <div className="topbar">
         <h1 className="section-title">FAM - TIMES CMS</h1>
         <div className="row">
@@ -668,27 +702,23 @@ export default function Admin() {
                     <div className="prediction-number-row" key={group.number}>
                       <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
                       <div className="prediction-number-avatars">
-                        {group.predictions.map((p) => {
-                          const tooltip = p.users?.nickname
-                            ? (p.users?.name || '') + ' • ' + p.users.nickname + ' • Bấm để sửa'
-                            : (p.users?.name || 'Người tham gia') + ' • Bấm để sửa';
-
-                          return (
-                            <button
-                              className={'prediction-avatar-tooltip admin-avatar-edit ' + (editingPredictionId === p.id ? 'selected' : '')}
-                              data-tooltip={tooltip}
-                              type="button"
-                              key={p.id}
-                              onClick={() => startEditPrediction(p)}
-                            >
-                              <img
-                                className="prediction-number-avatar"
-                                src={p.users?.avatar_url || '/avatar.svg'}
-                                alt={p.users?.name || 'Avatar'}
-                              />
-                            </button>
-                          );
-                        })}
+                        {group.predictions.map((p) => (
+                          <button
+                            className={'prediction-number-person admin-prediction-number-person ' + (editingPredictionId === p.id ? 'selected' : '')}
+                            type="button"
+                            key={p.id}
+                            onClick={() => startEditPrediction(p)}
+                          >
+                            <img
+                              className="prediction-number-avatar"
+                              src={p.users?.avatar_url || '/avatar.svg'}
+                              alt={p.users?.name || 'Avatar'}
+                            />
+                            <span className="prediction-number-person-name">
+                              {p.users?.name || 'Người tham gia'}
+                            </span>
+                          </button>
+                        ))}
                       </div>
                       <div className="prediction-number-count">{group.predictions.length} người</div>
                     </div>
@@ -763,7 +793,21 @@ export default function Admin() {
           </form>
           <div className="grid user-grid" style={{ marginTop: 18 }}>
             {users.map((u) => (
-              <div className={'card person user-card ' + (editingUserId === u.id ? 'editing' : '')} key={u.id}>
+              <div
+                className={'card person user-card ' + (editingUserId === u.id ? 'editing' : '')}
+                key={u.id}
+                onClick={() => {
+                  if (editingUserId !== u.id) startEditUser(u);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (editingUserId !== u.id && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    startEditUser(u);
+                  }
+                }}
+              >
                 {editingUserId === u.id ? (
                   <>
                     <img
