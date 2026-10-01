@@ -1443,3 +1443,82 @@ body:after{
     font-size:12px;
   }
 }
+
+
+/* Responsive admin history table: keep columns readable and scroll horizontally on small screens. */
+.history-table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(144,174,196,.55) rgba(255,255,255,.05);
+  border-radius:14px;
+}
+.history-table-wrap::-webkit-scrollbar{height:8px}
+.history-table-wrap::-webkit-scrollbar-track{
+  background:rgba(255,255,255,.05);
+  border-radius:999px;
+}
+.history-table-wrap::-webkit-scrollbar-thumb{
+  background:rgba(144,174,196,.55);
+  border-radius:999px;
+}
+.history-table{
+  width:100%;
+  min-width:760px;
+  table-layout:auto;
+}
+.history-table th,
+.history-table td{
+  white-space:nowrap;
+  padding:12px 12px;
+}
+.history-table th:nth-child(1),
+.history-table td:nth-child(1){min-width:180px}
+.history-table th:nth-child(2),
+.history-table td:nth-child(2){min-width:105px}
+.history-table th:nth-child(3),
+.history-table td:nth-child(3){min-width:90px}
+.history-table th:nth-child(4),
+.history-table td:nth-child(4){min-width:330px}
+.history-table th:nth-child(5),
+.history-table td:nth-child(5){min-width:90px}
+.history-table .history-details{
+  min-width:290px;
+  max-width:100%;
+}
+.history-table .history-prediction-row{
+  min-width:270px;
+}
+@media(max-width:650px){
+  .history-table-wrap{
+    margin-top:4px;
+    padding-bottom:4px;
+  }
+  .history-table{
+    min-width:780px;
+  }
+  .history-table th,
+  .history-table td{
+    padding:11px 12px;
+  }
+  .history-table th:nth-child(1),
+  .history-table td:nth-child(1){min-width:175px}
+  .history-table th:nth-child(4),
+  .history-table td:nth-child(4){min-width:350px}
+  .history-table .history-details{
+    margin-top:8px;
+    min-width:300px;
+  }
+  .history-table .history-prediction-row{
+    min-width:280px;
+    padding:8px 10px;
+  }
+  .history-table .history-event-title{
+    white-space:normal;
+    line-height:1.25;
+  }
+}
