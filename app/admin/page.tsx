@@ -181,6 +181,22 @@ export default function Admin() {
     load();
   }
 
+  async function deleteUser(user: User) {
+    if (!confirm(`Xóa thành viên "${user.name}"? Các dự đoán của thành viên này cũng sẽ bị xóa.`)) {
+      return;
+    }
+
+    const { error } = await supabase.from('users').delete().eq('id', user.id);
+
+    if (error) {
+      alert('Không thể xóa thành viên: ' + error.message);
+      return;
+    }
+
+    cancelEditUser();
+    load();
+  }
+
   function startEditEventTitle() {
     if (!active) return;
     setEventTitleDraft(active.title);
