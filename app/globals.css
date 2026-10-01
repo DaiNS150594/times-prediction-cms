@@ -975,3 +975,144 @@ body:after{
 .event-subtitle-create label{font-size:13px;font-weight:700;color:#c9d8e4}
 .event-subtitle-create textarea{resize:vertical;min-height:76px;line-height:1.5}
 @media(max-width:650px){.event-subtitle-create{grid-column:auto}}
+
+
+/* Desktop: keep navigation text-only; icons are mobile-only. */
+.tabs .tab-icon{display:none}
+
+/* Prediction numbers: show participant names beside avatars, no tooltip. */
+.prediction-number-person{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+.prediction-number-person-name{
+  color:#d7e4ec;
+  font-size:13px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.prediction-number-person .prediction-number-avatar{
+  flex:0 0 36px;
+}
+.prediction-number-avatars{
+  gap:10px 14px;
+}
+
+/* Admin manual/result number fields */
+.admin-manual-controls{grid-template-columns:minmax(220px,1fr) 100px auto}
+.admin-manual-number,
+.admin-result-input{
+  width:100px;
+  max-width:100px;
+}
+
+/* Editable event date in admin */
+.admin-event-heading-main{min-width:0;flex:1}
+.admin-event-date-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:7px;
+  color:#91a7b6;
+  font-size:13px;
+}
+.admin-event-date-editor{
+  display:grid;
+  grid-template-columns:minmax(220px,260px) auto auto;
+  align-items:center;
+  gap:8px;
+  margin-top:8px;
+}
+.admin-event-date-input::-webkit-calendar-picker-indicator{
+  filter:invert(1) brightness(1.8);
+  opacity:.95;
+  cursor:pointer;
+}
+.admin-event-date-input{
+  color-scheme:dark;
+}
+
+/* Mobile admin layout / spacing */
+@media(max-width:650px){
+  .admin-page{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .admin-page .panel > .section-title,
+  .admin-page .admin-event-title{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+  .admin-event-heading{
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+  .admin-event-date-row{
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:7px;
+  }
+  .admin-event-date-editor{
+    grid-template-columns:1fr;
+  }
+  .admin-event-date-editor .input,
+  .admin-event-date-editor .btn{
+    width:100%;
+    max-width:none;
+  }
+  .admin-manual-controls{
+    grid-template-columns:1fr 100px auto;
+  }
+  .admin-manual-number,
+  .admin-result-input{
+    width:100px;
+    max-width:100px;
+  }
+
+  /* User CRUD remains available on mobile. */
+  .admin-page .user-card-actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    width:100%;
+    margin-top:8px;
+  }
+  .admin-page .user-card-actions .btn{
+    flex:1;
+    min-width:0;
+    padding:7px 8px;
+    font-size:12px;
+  }
+  .admin-page .user-card:not(.editing) .user-card-body{
+    width:100%;
+  }
+  .admin-page .user-card.editing{
+    grid-column:span 2;
+  }
+
+  /* Names beside avatars stay compact on phones. */
+  .prediction-number-person{
+    gap:5px;
+    max-width:100%;
+  }
+  .prediction-number-person-name{
+    font-size:12px;
+    max-width:110px;
+  }
+  .prediction-number-avatars{
+    gap:4px 9px;
+  }
+  .prediction-number-person .prediction-number-avatar{
+    width:28px;
+    height:28px;
+    flex-basis:28px;
+  }
+}
