@@ -420,6 +420,16 @@ export default function Admin() {
             <div className="mobile-user-edit-actions">
               <button className="btn compact" type="button" onClick={() => updateUser(editingUserId)}>Lưu thay đổi</button>
               <button className="btn ghost compact" type="button" onClick={cancelEditUser}>Hủy</button>
+              <button
+                className="btn danger compact"
+                type="button"
+                onClick={() => {
+                  const user = users.find((u) => u.id === editingUserId);
+                  if (user) deleteUser(user);
+                }}
+              >
+                Xóa thành viên
+              </button>
             </div>
           </div>
         </div>
