@@ -1418,3 +1418,28 @@ body:after{
     display:none;
   }
 }
+
+/* Total member count in admin user section */
+.admin-user-list-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.admin-user-count{
+  color:#91a7b6;
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+}
+@media(max-width:650px){
+  .admin-user-list-title{
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .admin-user-count{
+    font-size:12px;
+  }
+}
