@@ -1038,7 +1038,7 @@ export default function Admin() {
                   <div className="admin-manual-title">Thêm dự đoán thủ công</div>
                   <div className="muted">Dùng khi người chơi nhắn tin nhờ admin nhập hộ.</div>
                 </div>
-                <div className="admin-manual-controls">
+                <div className={"admin-manual-controls " + (tournamentOpen ? "has-champion" : "")}>
                   <select
                     className="input"
                     value={manualPredictionUserId}
