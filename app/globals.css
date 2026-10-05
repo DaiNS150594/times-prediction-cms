@@ -1,3 +1,8 @@
+.input[type="datetime-local"]::-webkit-calendar-picker-indicator{
+  filter:invert(1) brightness(1.8);
+  opacity:1;
+  cursor:pointer;
+}
 @font-face{
   font-family:"SVN Road Rage";
   src:url("/fonts/SVN-Road Rage.ttf") format("truetype");
@@ -1605,7 +1610,7 @@ body:after{
   margin:12px 0 8px;
   max-width:100%;
   font-family:"SVN Road Rage", Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif;
-  font-size:clamp(48px,8vw,96px);
+  font-size:clamp(42px,10vw,68px);
   font-weight:900;
   line-height:1.3;
   letter-spacing:.035em;
@@ -1700,6 +1705,59 @@ body:after{
   border:1px solid rgba(171,207,232,.18);
   border-radius:16px;
   background:rgba(3,18,31,.32);
+}
+.tournament-info-image-button{
+  display:block;
+  width:100%;
+  padding:0;
+  border:0;
+  cursor:zoom-in;
+  text-align:left;
+}
+.tournament-info-image-button:focus-visible{
+  outline:2px solid #ff8a45;
+  outline-offset:3px;
+}
+.tournament-info-lightbox{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+.tournament-info-lightbox-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:rgba(0,5,10,.88);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  cursor:zoom-out;
+}
+.tournament-info-lightbox-content{
+  position:relative;
+  z-index:1;
+  width:min(96vw,1200px);
+  max-height:92vh;
+  padding:10px;
+  border:1px solid rgba(214,234,248,.32);
+  border-radius:18px;
+  background:rgba(5,20,34,.96);
+  box-shadow:0 30px 90px rgba(0,0,0,.58);
+}
+.tournament-info-lightbox-content img{
+  display:block;
+  width:100%;
+  max-height:88vh;
+  object-fit:contain;
+  border-radius:10px;
+}
+.tournament-info-lightbox-content .winner-popup-close{
+  z-index:2;
+}
+.tournament-champion-select{
+  grid-column:1 / -1;
 }
 .tournament-info-image-wrap img{
   display:block;
