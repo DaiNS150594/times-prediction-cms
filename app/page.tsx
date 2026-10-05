@@ -2,13 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, User } from '@/types';
+import type { Event, Prediction, TournamentTeam, User } from '@/types';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
+  const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [dismissedTournamentWinnerId, setDismissedTournamentWinnerId] = useState<string | null>(null);
+  const [landingMusicOn, setLandingMusicOn] = useState(false);
+  const [landingTrackIndex, setLandingTrackIndex] = useState(0);
+  const landingAudioRef = useRef<HTMLAudioElement | null>(null);
   const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('number');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [submitUserId, setSubmitUserId] = useState('');
@@ -20,14 +25,16 @@ export default function Home() {
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }] = await Promise.all([
       supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
+      supabase.from('tournament_teams').select('*,team_members(*,users(id,name,nickname,avatar_url,created_at))').order('created_at'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
     setPreds((p as any) || []);
+    setTeams((t as any) || []);
   }
 
   useEffect(() => {
@@ -50,6 +57,8 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_teams' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, load)
       .subscribe();
 
     return () => {
@@ -87,6 +96,22 @@ export default function Home() {
     };
   }, [tab]);
 
+  const landingMusicSources = ['/landing-track-1.mp3', '/landing-track-2.mp3'];
+
+  useEffect(() => {
+    const audio = landingAudioRef.current;
+    if (!audio) return;
+
+    if (tab !== 'landing' || !landingMusicOn) {
+      audio.pause();
+      return;
+    }
+
+    audio.play().catch(() => {
+      // Browsers may block autoplay until the user interacts with the page.
+    });
+  }, [tab, landingMusicOn, landingTrackIndex]);
+
   const active = events.find((e) => e.status === 'active');
   const latestClosedEvent = events.find((e) => e.status === 'closed' && e.actual_result != null);
   const latestWinners = latestClosedEvent
@@ -103,6 +128,14 @@ export default function Home() {
   const current = active ? preds.filter((p) => p.event_id === active.id) : [];
   const submittedUserIds = new Set(current.map((p) => p.user_id));
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
+  const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
+  const tournamentWinner = remainingTournamentTeams.length === 1 && teams.some((team) => team.status === 'stopped')
+    ? remainingTournamentTeams[0]
+    : null;
+  const showTournamentWinnerPopup =
+    tab === 'landing' &&
+    !!tournamentWinner &&
+    dismissedTournamentWinnerId !== tournamentWinner.id;
 
   const sortedCurrent = [...current].sort((a, b) => {
     const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
@@ -191,6 +224,43 @@ export default function Home() {
 
   return (
     <>
+      {showTournamentWinnerPopup && tournamentWinner && (
+        <div className="tournament-winner-backdrop" role="dialog" aria-modal="true" aria-label="Chúc mừng đội vô địch">
+          <div className="tournament-winner-celebration" aria-hidden="true">
+            {Array.from({ length: 28 }).map((_, index) => (
+              <span className={'tournament-confetti tournament-confetti-' + (index + 1)} key={index} />
+            ))}
+          </div>
+          <section className="tournament-winner-popup">
+            <button
+              className="winner-popup-close"
+              type="button"
+              aria-label="Đóng thông báo"
+              onClick={() => setDismissedTournamentWinnerId(tournamentWinner.id)}
+            >×</button>
+            <div className="winner-trophy">🏆</div>
+            <div className="winner-kicker">GIẢI ĐẤU FAM - TIMES</div>
+            <h2>Chúc mừng nhà vô địch!</h2>
+            <div className="tournament-winner-team-name">{tournamentWinner.name}</div>
+            <div className="tournament-winner-members">
+              {(tournamentWinner.team_members || []).map((member) => (
+                <div className="tournament-winner-member" key={member.id}>
+                  <img src={member.users?.avatar_url || '/avatar.svg'} alt={member.users?.name || 'Thành viên'} />
+                  <span>{member.users?.name || 'Thành viên'}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              className="btn winner-popup-button"
+              type="button"
+              onClick={() => setDismissedTournamentWinnerId(tournamentWinner.id)}
+            >
+              Tuyệt vời!
+            </button>
+          </section>
+        </div>
+      )}
+
       {showResultPopup && latestClosedEvent && (
         <div
           className={'winner-popup-backdrop ' + (latestWinners.length === 0 ? 'no-winner-backdrop' : '')}
@@ -318,23 +388,74 @@ export default function Home() {
         <section className="landing-page">
           <div className="landing-banner" ref={landingBannerRef}>
             <div className="landing-banner-media" aria-hidden="true">
-              <img src="/times-bg.jpg" alt="" />
+              <img src="/bg-landingpage.jpg" alt="" />
             </div>
             <div className="landing-banner-overlay" />
             <div className="landing-banner-content">
               <div className="landing-kicker">FAM - TIMES</div>
               <h2>GIẢI ĐẤU</h2>
               <p>Chơi game bằng thực lực!</p>
-              <a className="btn landing-banner-button" href="#current">Tham gia dự đoán</a>
+              <div className="landing-banner-actions">
+                <a className="btn landing-banner-button" href="#current">Tham gia dự đoán</a>
+                <button
+                  className={'landing-music-toggle ' + (landingMusicOn ? 'is-playing' : '')}
+                  type="button"
+                  onClick={() => {
+                    const next = !landingMusicOn;
+                    setLandingMusicOn(next);
+                    if (next) landingAudioRef.current?.play().catch(() => undefined);
+                  }}
+                >
+                  <span>{landingMusicOn ? '♫' : '♪'}</span>
+                  {landingMusicOn ? 'Đang phát nhạc' : 'Bật nhạc nền'}
+                </button>
+                <audio
+                  ref={landingAudioRef}
+                  src={landingMusicSources[landingTrackIndex]}
+                  preload="auto"
+                  onEnded={() => setLandingTrackIndex((current) => (current + 1) % landingMusicSources.length)}
+                />
+              </div>
             </div>
           </div>
 
           <div className="panel landing-intro">
-            <div className="landing-kicker">GIẢI ĐẤU</div>
-            <h2 className="section-title">Sân chơi realtime của FAM - TIMES</h2>
-            <p className="landing-intro-text">
-              Theo dõi giải đấu, xem thành viên tham gia và cập nhật kết quả trực tiếp trên cùng một giao diện.
-            </p>
+            <div className="landing-section-heading">
+              <div>
+                <div className="landing-kicker">BẢNG ĐẤU</div>
+                <h2 className="section-title">Các đội thi đấu</h2>
+              </div>
+              <div className="landing-team-counter">{teams.length} đội</div>
+            </div>
+
+            {teams.length === 0 ? (
+              <div className="landing-empty">Chưa có đội thi đấu.</div>
+            ) : (
+              <div className="tournament-team-grid">
+                {teams.map((team) => (
+                  <article className={'tournament-team-card ' + (team.status === 'stopped' ? 'is-stopped' : '')} key={team.id}>
+                    {team.status === 'stopped' && <div className="tournament-stopped-overlay"><span>DỪNG BƯỚC</span></div>}
+                    <div className="tournament-team-card-head">
+                      <span className={'tournament-status-badge ' + team.status}>
+                        {team.status === 'stopped' ? 'Dừng bước' : team.status === 'advanced' ? 'Đi tiếp' : 'Đang thi đấu'}
+                      </span>
+                      <h3>{team.name}</h3>
+                    </div>
+                    <div className="tournament-team-members">
+                      {(team.team_members || []).map((member) => (
+                        <div className="tournament-team-member" key={member.id}>
+                          <img src={member.users?.avatar_url || '/avatar.svg'} alt={member.users?.name || 'Thành viên'} />
+                          <div>
+                            <b>{member.users?.name || 'Thành viên'}</b>
+                            <span>{member.users?.nickname || '—'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
