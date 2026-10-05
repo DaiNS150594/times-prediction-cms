@@ -572,7 +572,11 @@ body:after{
   flex:1;
   max-width:720px;
 }
+.admin-manual-controls.has-champion{
+  grid-template-columns:minmax(180px,1fr) minmax(160px,1fr) 110px auto;
+}
 .admin-manual-number{text-align:center}
+.admin-manual-champion{min-width:0}
 .admin-manual-add{white-space:nowrap}
 
 .admin-prediction-name-list{margin-top:0}
