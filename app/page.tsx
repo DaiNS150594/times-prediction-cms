@@ -42,7 +42,7 @@ export default function Home() {
 
     const getTabFromHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'users' || hash === 'history' || hash === 'current') {
+      if (hash === 'landing' || hash === 'users' || hash === 'history' || hash === 'current') {
         setTab(hash);
       } else {
         setTab('current');
