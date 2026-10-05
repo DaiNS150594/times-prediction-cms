@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentSettings, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentMatch, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Admin() {
   const [session, setSession] = useState<any>(undefined);
@@ -13,6 +13,15 @@ export default function Admin() {
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [tournamentMatches, setTournamentMatches] = useState<TournamentMatch[]>([]);
+  const [matchRound, setMatchRound] = useState<TournamentMatch['round']>('quarterfinal');
+  const [matchOrder, setMatchOrder] = useState('1');
+  const [matchTeam1, setMatchTeam1] = useState('');
+  const [matchTeam2, setMatchTeam2] = useState('');
+  const [matchScore1, setMatchScore1] = useState('');
+  const [matchScore2, setMatchScore2] = useState('');
+  const [matchTime, setMatchTime] = useState('');
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
   const [tournamentTitle, setTournamentTitle] = useState('GIẢI ĐẤU');
   const [tournamentSubtitle, setTournamentSubtitle] = useState('Chơi game bằng thực lực!');
@@ -49,12 +58,13 @@ export default function Admin() {
   const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }, { data: tm }] = await Promise.all([
       supabase.from('users').select('*').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(*)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(*))').order('created_at'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
+      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*)').order('round').order('match_order'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
@@ -63,6 +73,7 @@ export default function Admin() {
     setEventSubtitle(nextActive?.subtitle || '');
     setPreds((p as any) || []);
     setTeams((t as any) || []);
+    setTournamentMatches((tm as TournamentMatch[]) || []);
     const nextTournamentSettings = (ts as TournamentSettings | null);
     setTournamentSettings(nextTournamentSettings);
     setTournamentTitle(nextTournamentSettings?.title || 'GIẢI ĐẤU');
@@ -128,6 +139,75 @@ export default function Admin() {
       return groups;
     }, {})
   ).sort((a, b) => a.number - b.number);
+
+  function resetMatchForm() {
+    setMatchRound('quarterfinal');
+    setMatchOrder('1');
+    setMatchTeam1('');
+    setMatchTeam2('');
+    setMatchScore1('');
+    setMatchScore2('');
+    setMatchTime('');
+    setEditingMatchId(null);
+  }
+
+  function startEditMatch(match: TournamentMatch) {
+    setEditingMatchId(match.id);
+    setMatchRound(match.round);
+    setMatchOrder(String(match.match_order));
+    setMatchTeam1(match.team1_id || '');
+    setMatchTeam2(match.team2_id || '');
+    setMatchScore1(match.score1 == null ? '' : String(match.score1));
+    setMatchScore2(match.score2 == null ? '' : String(match.score2));
+    setMatchTime(match.match_time ? new Date(match.match_time).toISOString().slice(0, 16) : '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function saveTournamentMatch(e: any) {
+    e.preventDefault();
+    const order = Number(matchOrder);
+    if (!Number.isInteger(order) || order < 1) {
+      alert('Thứ tự trận không hợp lệ.');
+      return;
+    }
+    if (!matchTeam1 || !matchTeam2 || matchTeam1 === matchTeam2) {
+      alert('Hãy chọn 2 đội khác nhau.');
+      return;
+    }
+
+    const payload = {
+      round: matchRound,
+      match_order: order,
+      team1_id: matchTeam1,
+      team2_id: matchTeam2,
+      score1: matchScore1 === '' ? null : Number(matchScore1),
+      score2: matchScore2 === '' ? null : Number(matchScore2),
+      match_time: matchTime ? new Date(matchTime).toISOString() : null,
+    };
+
+    const { error } = editingMatchId
+      ? await supabase.from('tournament_matches').update(payload).eq('id', editingMatchId)
+      : await supabase.from('tournament_matches').upsert(payload, { onConflict: 'round,match_order' });
+
+    if (error) {
+      alert('Không thể lưu trận đấu: ' + error.message);
+      return;
+    }
+
+    resetMatchForm();
+    load();
+  }
+
+  async function deleteTournamentMatch(match: TournamentMatch) {
+    if (!confirm('Xóa trận đấu này khỏi sơ đồ?')) return;
+    const { error } = await supabase.from('tournament_matches').delete().eq('id', match.id);
+    if (error) {
+      alert('Không thể xóa trận đấu: ' + error.message);
+      return;
+    }
+    if (editingMatchId === match.id) resetMatchForm();
+    load();
+  }
 
   async function saveTournamentSettings(e: any) {
     e.preventDefault();
@@ -863,6 +943,50 @@ export default function Admin() {
               {editingTeamId && <button className="btn ghost" type="button" onClick={resetTeamForm}>Hủy</button>}
             </div>
           </form>
+
+          <div className="tournament-bracket-admin">
+            <div className="tournament-form-title">Sơ đồ trận đấu</div>
+            <p className="muted">Sau khi tạo đội, chọn vòng đấu và ghép 2 đội vào từng trận. Thứ tự trận bắt đầu từ 1 trong mỗi vòng.</p>
+            <form className="tournament-match-form" onSubmit={saveTournamentMatch}>
+              <select className="input" value={matchRound} onChange={(e) => setMatchRound(e.target.value as TournamentMatch['round'])}>
+                <option value="round_of_16">Vòng 1/8</option>
+                <option value="quarterfinal">Tứ kết</option>
+                <option value="semifinal">Bán kết</option>
+                <option value="final">Chung kết</option>
+              </select>
+              <input className="input" type="number" min="1" placeholder="Trận số" value={matchOrder} onChange={(e) => setMatchOrder(e.target.value)} />
+              <select className="input" value={matchTeam1} onChange={(e) => setMatchTeam1(e.target.value)} required>
+                <option value="">Đội 1</option>
+                {teams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}
+              </select>
+              <select className="input" value={matchTeam2} onChange={(e) => setMatchTeam2(e.target.value)} required>
+                <option value="">Đội 2</option>
+                {teams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}
+              </select>
+              <input className="input" type="number" min="0" placeholder="Tỷ số 1" value={matchScore1} onChange={(e) => setMatchScore1(e.target.value)} />
+              <input className="input" type="number" min="0" placeholder="Tỷ số 2" value={matchScore2} onChange={(e) => setMatchScore2(e.target.value)} />
+              <input className="input" type="datetime-local" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} />
+              <div className="tournament-form-actions">
+                <button className="btn" type="submit">{editingMatchId ? 'Lưu trận' : 'Thêm trận'}</button>
+                {editingMatchId && <button className="btn ghost" type="button" onClick={resetMatchForm}>Hủy</button>}
+              </div>
+            </form>
+
+            <div className="tournament-match-admin-list">
+              {tournamentMatches.map((match) => (
+                <div className="tournament-match-admin-row" key={match.id}>
+                  <div>
+                    <b>{match.round === 'round_of_16' ? 'Vòng 1/8' : match.round === 'quarterfinal' ? 'Tứ kết' : match.round === 'semifinal' ? 'Bán kết' : 'Chung kết'} · Trận {match.match_order}</b>
+                    <span>{match.team1?.name || 'Đội 1'} {match.score1 != null ? match.score1 : '-'} : {match.score2 != null ? match.score2 : '-'} {match.team2?.name || 'Đội 2'}</span>
+                  </div>
+                  <div className="tournament-admin-card-actions">
+                    <button className="btn ghost compact" type="button" onClick={() => startEditMatch(match)}>Sửa</button>
+                    <button className="btn danger compact" type="button" onClick={() => deleteTournamentMatch(match)}>Xóa</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="tournament-admin-list">
             {teams.map((team) => (
