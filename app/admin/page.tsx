@@ -131,6 +131,23 @@ export default function Admin() {
     setTeamMembers((current) => current.map((value, i) => i === index ? userId : value));
   }
 
+  function getAvailableTeamMembers(index: number) {
+    const selectedInOtherTeams = new Set(
+      teams
+        .filter((team) => team.id !== editingTeamId)
+        .flatMap((team) => (team.team_members || []).map((member) => member.user_id))
+    );
+
+    const selectedInOtherSlots = new Set(
+      teamMembers.filter((userId, slotIndex) => slotIndex !== index && userId)
+    );
+
+    return users.filter((user) =>
+      (!selectedInOtherTeams.has(user.id) || teamMembers[index] === user.id) &&
+      (!selectedInOtherSlots.has(user.id) || teamMembers[index] === user.id)
+    );
+  }
+
   async function saveTeam(e: any) {
     e.preventDefault();
     const selected = teamMembers.filter(Boolean);
@@ -615,7 +632,7 @@ export default function Admin() {
                   onChange={(e) => updateTeamMember(index, e.target.value)}
                 >
                   <option value="">Chọn thành viên {index + 1}</option>
-                  {users.map((u) => (
+                  {getAvailableTeamMembers(index).map((u) => (
                     <option value={u.id} key={u.id}>{u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}</option>
                   ))}
                 </select>
