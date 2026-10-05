@@ -153,6 +153,60 @@ export default function Home() {
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
   const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
 
+  useEffect(() => {
+    if (tab !== 'landing' || tournamentMatches.length === 0) return;
+
+    let frame = 0;
+
+    const drawTournamentBracketLines = () => {
+      const root = document.querySelector('.tournament-bracket') as HTMLElement | null;
+      const svg = root?.querySelector('.tournament-bracket-lines') as SVGSVGElement | null;
+      if (!root || !svg) return;
+
+      const rootRect = root.getBoundingClientRect();
+      svg.setAttribute('viewBox', `0 0 ${Math.max(root.scrollWidth, rootRect.width)} ${root.scrollHeight}`);
+      svg.setAttribute('width', String(Math.max(root.scrollWidth, rootRect.width)));
+      svg.setAttribute('height', String(root.scrollHeight));
+      svg.innerHTML = '';
+
+      const rounds = Array.from(root.querySelectorAll('.tournament-bracket-round'));
+      rounds.forEach((round, roundIndex) => {
+        const nextRound = rounds[roundIndex + 1];
+        if (!nextRound) return;
+
+        const sourceMatches = Array.from(round.querySelectorAll('.tournament-bracket-match')) as HTMLElement[];
+        const targetMatches = Array.from(nextRound.querySelectorAll('.tournament-bracket-match')) as HTMLElement[];
+
+        sourceMatches.forEach((source, index) => {
+          const target = targetMatches[Math.floor(index / 2)];
+          if (!target) return;
+
+          const sourceRect = source.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+
+          const sx = sourceRect.right - rootRect.left;
+          const sy = sourceRect.top + sourceRect.height / 2 - rootRect.top;
+          const tx = targetRect.left - rootRect.left;
+          const ty = targetRect.top + targetRect.height / 2 - rootRect.top;
+          const midX = sx + Math.max(28, (tx - sx) * 0.5);
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', `M ${sx} ${sy} H ${midX} V ${ty} H ${tx}`);
+          path.setAttribute('class', 'tournament-bracket-line');
+          svg.appendChild(path);
+        });
+      });
+    };
+
+    frame = requestAnimationFrame(drawTournamentBracketLines);
+    window.addEventListener('resize', drawTournamentBracketLines);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', drawTournamentBracketLines);
+    };
+  }, [tab, tournamentMatches]);
+
   function getChampionPrediction(userId: string) {
     return tournamentPredictions.find((prediction) => prediction.user_id === userId);
   }
@@ -542,30 +596,66 @@ export default function Home() {
                   <h2 className="section-title">Các cặp đấu</h2>
                 </div>
               </div>
+
               <div className="tournament-bracket-scroll">
                 <div className="tournament-bracket">
+                  <svg className="tournament-bracket-lines" aria-hidden="true" />
                   {(['round_of_16','quarterfinal','semifinal','final'] as TournamentMatch['round'][]).map((round) => {
-                    const roundMatches = tournamentMatches.filter((match) => match.round === round).sort((a,b) => a.match_order - b.match_order);
+                    const roundMatches = tournamentMatches
+                      .filter((match) => match.round === round)
+                      .sort((a, b) => a.match_order - b.match_order);
+
                     if (!roundMatches.length) return null;
-                    const roundTitle = round === 'round_of_16' ? 'VÒNG 1/8' : round === 'quarterfinal' ? 'TỨ KẾT' : round === 'semifinal' ? 'BÁN KẾT' : 'CHUNG KẾT';
+
+                    const roundTitle =
+                      round === 'round_of_16' ? 'VÒNG 1/8' :
+                      round === 'quarterfinal' ? 'TỨ KẾT' :
+                      round === 'semifinal' ? 'BÁN KẾT' : 'CHUNG KẾT';
+
                     return (
                       <div className={'tournament-bracket-round tournament-bracket-' + round} key={round}>
                         <div className="tournament-bracket-round-title">{roundTitle}</div>
+
                         <div className="tournament-bracket-matches">
-                          {roundMatches.map((match) => (
-                            <article className="tournament-bracket-match" key={match.id}>
-                              <div className="tournament-bracket-match-label">TRẬN {match.match_order}</div>
-                              <div className={'tournament-bracket-team ' + (match.winner_team_id === match.team1_id ? 'winner' : '')}>
-                                <span>{match.team1?.name || 'Đội 1'}</span>
-                                {match.winner_team_id === match.team1_id && <b>✓</b>}
-                              </div>
-                              <div className={'tournament-bracket-team ' + (match.winner_team_id === match.team2_id ? 'winner' : '')}>
-                                <span>{match.team2?.name || 'Đội 2'}</span>
-                                {match.winner_team_id === match.team2_id && <b>✓</b>}
-                              </div>
-                              {match.match_time && <div className="tournament-bracket-time">{new Date(match.match_time).toLocaleString('vi-VN')}</div>}
-                            </article>
-                          ))}
+                          {roundMatches.map((match) => {
+                            const team1Name = match.team1?.name || 'Chưa xác định';
+                            const team2Name = match.team2?.name || 'Chưa xác định';
+                            const team1Placeholder = !match.team1_id;
+                            const team2Placeholder = !match.team2_id;
+
+                            return (
+                              <article className="tournament-bracket-match" key={match.id}>
+                                <div className="tournament-bracket-match-label">TRẬN {match.match_order}</div>
+
+                                <div className={'tournament-bracket-team ' + (team1Placeholder ? 'placeholder ' : '') + (match.winner_team_id === match.team1_id ? 'winner' : '')}>
+                                  <span className="tournament-bracket-team-name">
+                                    <span className="tournament-bracket-team-mark">{team1Placeholder ? '?' : '●'}</span>
+                                    {team1Name}
+                                  </span>
+                                  {match.winner_team_id === match.team1_id && <b>✓</b>}
+                                </div>
+
+                                <div className={'tournament-bracket-team ' + (team2Placeholder ? 'placeholder ' : '') + (match.winner_team_id === match.team2_id ? 'winner' : '')}>
+                                  <span className="tournament-bracket-team-name">
+                                    <span className="tournament-bracket-team-mark">{team2Placeholder ? '?' : '●'}</span>
+                                    {team2Name}
+                                  </span>
+                                  {match.winner_team_id === match.team2_id && <b>✓</b>}
+                                </div>
+
+                                {match.match_time && (
+                                  <div className="tournament-bracket-time">
+                                    {new Date(match.match_time).toLocaleString('vi-VN', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </div>
+                                )}
+                              </article>
+                            );
+                          })}
                         </div>
                       </div>
                     );
