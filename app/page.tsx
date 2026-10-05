@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, User } from '@/types';
 
@@ -17,6 +17,7 @@ export default function Home() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [dismissedWinnerEventId, setDismissedWinnerEventId] = useState<string | null>(null);
+  const landingBannerRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
@@ -56,6 +57,35 @@ export default function Home() {
       supabase.removeChannel(ch);
     };
   }, []);
+
+  useEffect(() => {
+    if (tab !== 'landing') return;
+
+    let frame = 0;
+    const updateParallax = () => {
+      if (!landingBannerRef.current) return;
+      const rect = landingBannerRef.current.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      const offset = (rect.top - viewportCenter) * -0.12;
+      landingBannerRef.current.style.setProperty('--landing-parallax-y', String(offset) + 'px');
+      frame = 0;
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateParallax);
+    };
+
+    updateParallax();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [tab]);
 
   const active = events.find((e) => e.status === 'active');
   const latestClosedEvent = events.find((e) => e.status === 'closed' && e.actual_result != null);
@@ -267,6 +297,10 @@ export default function Home() {
       </header>
 
       <nav className="tabs" aria-label="Các khu vực">
+        <a className={'tab ' + (tab === 'landing' ? 'active' : '')} href="#landing" aria-label="Giải đấu">
+          <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v4a6 6 0 0 1-12 0z" /><path d="M8 13h8M10 17h4M9 21h6" /><path d="M4 5H2v2a4 4 0 0 0 4 4M20 5h2v2a4 4 0 0 1-4 4" /></svg>
+          <span>Giải đấu</span>
+        </a>
         <a className={'tab ' + (tab === 'current' ? 'active' : '')} href="#current" aria-label="Dự đoán hiện tại">
           <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 3l8 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-3v6h-5A1.5 1.5 0 0 1 4 19.5z" /></svg>
           <span>Dự đoán</span>
@@ -280,6 +314,31 @@ export default function Home() {
           <span>Lịch sử</span>
         </a>
       </nav>
+      {tab === 'landing' && (
+        <section className="landing-page">
+          <div className="landing-banner" ref={landingBannerRef}>
+            <div className="landing-banner-media" aria-hidden="true">
+              <img src="/times-bg.jpg" alt="" />
+            </div>
+            <div className="landing-banner-overlay" />
+            <div className="landing-banner-content">
+              <div className="landing-kicker">FAM - TIMES</div>
+              <h2>GIẢI ĐẤU</h2>
+              <p>Chơi game bằng thực lực!</p>
+              <a className="btn landing-banner-button" href="#current">Tham gia dự đoán</a>
+            </div>
+          </div>
+
+          <div className="panel landing-intro">
+            <div className="landing-kicker">GIẢI ĐẤU</div>
+            <h2 className="section-title">Sân chơi realtime của FAM - TIMES</h2>
+            <p className="landing-intro-text">
+              Theo dõi giải đấu, xem thành viên tham gia và cập nhật kết quả trực tiếp trên cùng một giao diện.
+            </p>
+          </div>
+        </section>
+      )}
+
       {tab === 'current' && (
         <section className="panel">
           <h2 className={'section-title ' + (active ? 'status-live' : 'status-offline')}>
