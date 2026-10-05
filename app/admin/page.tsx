@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, User } from '@/types';
+import type { Event, Prediction, TournamentTeam, User } from '@/types';
 
 export default function Admin() {
   const [session, setSession] = useState<any>(undefined);
@@ -12,6 +12,10 @@ export default function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
+  const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [teamName, setTeamName] = useState('');
+  const [teamMembers, setTeamMembers] = useState<string[]>(['', '', '']);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [nick, setNick] = useState('');
   const [avatar, setAvatar] = useState('');
@@ -38,10 +42,11 @@ export default function Admin() {
   const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }] = await Promise.all([
       supabase.from('users').select('*').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(*)'),
+      supabase.from('tournament_teams').select('*,team_members(*,users(*))').order('created_at'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
@@ -49,6 +54,7 @@ export default function Admin() {
     setEventLink(nextActive?.event_link || '');
     setEventSubtitle(nextActive?.subtitle || '');
     setPreds((p as any) || []);
+    setTeams((t as any) || []);
   }
 
   useEffect(() => {
@@ -107,6 +113,116 @@ export default function Admin() {
       return groups;
     }, {})
   ).sort((a, b) => a.number - b.number);
+
+  function resetTeamForm() {
+    setTeamName('');
+    setTeamMembers(['', '', '']);
+    setEditingTeamId(null);
+  }
+
+  function startEditTeam(team: TournamentTeam) {
+    setEditingTeamId(team.id);
+    setTeamName(team.name);
+    const ids = (team.team_members || []).map((member) => member.user_id);
+    setTeamMembers([ids[0] || '', ids[1] || '', ids[2] || '']);
+  }
+
+  function updateTeamMember(index: number, userId: string) {
+    setTeamMembers((current) => current.map((value, i) => i === index ? userId : value));
+  }
+
+  async function saveTeam(e: any) {
+    e.preventDefault();
+    const selected = teamMembers.filter(Boolean);
+    if (!teamName.trim()) {
+      alert('Tên đội không được để trống.');
+      return;
+    }
+    if (selected.length !== 3 || new Set(selected).size !== 3) {
+      alert('Mỗi đội phải có đúng 3 thành viên khác nhau.');
+      return;
+    }
+
+    if (editingTeamId) {
+      const { error: teamError } = await supabase
+        .from('tournament_teams')
+        .update({ name: teamName.trim() })
+        .eq('id', editingTeamId);
+
+      if (teamError) {
+        alert('Không thể cập nhật đội: ' + teamError.message);
+        return;
+      }
+
+      const { error: memberDeleteError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', editingTeamId);
+
+      if (memberDeleteError) {
+        alert('Không thể cập nhật thành viên đội: ' + memberDeleteError.message);
+        return;
+      }
+
+      const { error: memberInsertError } = await supabase
+        .from('team_members')
+        .insert(selected.map((userId) => ({ team_id: editingTeamId, user_id: userId })));
+
+      if (memberInsertError) {
+        alert('Không thể cập nhật thành viên đội: ' + memberInsertError.message);
+        return;
+      }
+    } else {
+      const { data: created, error: teamError } = await supabase
+        .from('tournament_teams')
+        .insert({ name: teamName.trim(), status: 'active' })
+        .select('id')
+        .single();
+
+      if (teamError || !created) {
+        alert('Không thể tạo đội: ' + (teamError?.message || 'Không có dữ liệu đội.'));
+        return;
+      }
+
+      const { error: memberInsertError } = await supabase
+        .from('team_members')
+        .insert(selected.map((userId) => ({ team_id: created.id, user_id: userId })));
+
+      if (memberInsertError) {
+        await supabase.from('tournament_teams').delete().eq('id', created.id);
+        alert('Không thể thêm thành viên đội: ' + memberInsertError.message);
+        return;
+      }
+    }
+
+    resetTeamForm();
+    load();
+  }
+
+  async function deleteTeam(team: TournamentTeam) {
+    if (!confirm('Xóa đội "' + team.name + '"?')) return;
+    const { error } = await supabase.from('tournament_teams').delete().eq('id', team.id);
+    if (error) {
+      alert('Không thể xóa đội: ' + error.message);
+      return;
+    }
+    if (editingTeamId === team.id) resetTeamForm();
+    load();
+  }
+
+  async function setTeamStatus(team: TournamentTeam, status: 'advanced' | 'stopped') {
+    const label = status === 'advanced' ? 'Đi Tiếp' : 'Dừng bước';
+    if (!confirm('Đánh dấu đội "' + team.name + '" là "' + label + '"?')) return;
+    const { error } = await supabase
+      .from('tournament_teams')
+      .update({ status })
+      .eq('id', team.id);
+    if (error) {
+      alert('Không thể cập nhật trạng thái đội: ' + error.message);
+      return;
+    }
+    load();
+  }
 
   async function addUser(e: any) {
     e.preventDefault();
@@ -465,6 +581,9 @@ export default function Admin() {
         <button className={'tab ' + (tab === 'board' ? 'active' : '')} onClick={() => setTab('board')}>
           Bảng dự đoán
         </button>
+        <button className={'tab ' + (tab === 'teams' ? 'active' : '')} onClick={() => setTab('teams')}>
+          Giải đấu
+        </button>
         <button className={'tab ' + (tab === 'users' ? 'active' : '')} onClick={() => setTab('users')}>
           User
         </button>
@@ -472,6 +591,72 @@ export default function Admin() {
           Kết quả / Lịch sử
         </button>
       </nav>
+
+      {tab === 'teams' && (
+        <section className="panel tournament-admin-panel">
+          <div className="tournament-admin-heading">
+            <div>
+              <h2 className="section-title">Đội thi đấu</h2>
+              <p className="muted">Mỗi đội gồm đúng 3 thành viên. Admin có thể tạo, sửa, xóa và cập nhật tiến trình.</p>
+            </div>
+            <div className="admin-user-count">Tổng: {teams.length} đội</div>
+          </div>
+
+          <form className="tournament-team-form" onSubmit={saveTeam}>
+            <div className="tournament-form-title">{editingTeamId ? 'Sửa đội' : 'Tạo đội mới'}</div>
+            <input className="input" required placeholder="Tên đội" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+            <div className="tournament-member-selects">
+              {[0, 1, 2].map((index) => (
+                <select
+                  className="input"
+                  required
+                  key={index}
+                  value={teamMembers[index]}
+                  onChange={(e) => updateTeamMember(index, e.target.value)}
+                >
+                  <option value="">Chọn thành viên {index + 1}</option>
+                  {users.map((u) => (
+                    <option value={u.id} key={u.id}>{u.name}{u.nickname ? ' (' + u.nickname + ')' : ''}</option>
+                  ))}
+                </select>
+              ))}
+            </div>
+            <div className="tournament-form-actions">
+              <button className="btn" type="submit">{editingTeamId ? 'Lưu đội' : 'Tạo đội'}</button>
+              {editingTeamId && <button className="btn ghost" type="button" onClick={resetTeamForm}>Hủy</button>}
+            </div>
+          </form>
+
+          <div className="tournament-admin-list">
+            {teams.map((team) => (
+              <article className={'tournament-team-admin-card ' + (team.status === 'stopped' ? 'is-stopped' : '')} key={team.id}>
+                <div className="tournament-team-admin-head">
+                  <div>
+                    <div className="tournament-team-status">{team.status === 'stopped' ? 'DỪNG BƯỚC' : team.status === 'advanced' ? 'ĐI TIẾP' : 'ĐANG THI ĐẤU'}</div>
+                    <h3>{team.name}</h3>
+                  </div>
+                  <div className="tournament-admin-card-actions">
+                    <button className="btn ghost compact" type="button" onClick={() => startEditTeam(team)}>Sửa</button>
+                    <button className="btn danger compact" type="button" onClick={() => deleteTeam(team)}>Xóa</button>
+                  </div>
+                </div>
+                <div className="tournament-team-admin-members">
+                  {(team.team_members || []).map((member) => (
+                    <div className="tournament-team-member" key={member.id}>
+                      <img src={member.users?.avatar_url || '/avatar.svg'} alt={member.users?.name || 'Avatar'} />
+                      <span>{member.users?.name || 'Thành viên'}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="tournament-team-status-actions">
+                  <button className="btn tournament-advance-btn" type="button" onClick={() => setTeamStatus(team, 'advanced')}>Đi Tiếp</button>
+                  <button className="btn danger tournament-stop-btn" type="button" onClick={() => setTeamStatus(team, 'stopped')}>Dừng bước</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {tab === 'board' && (
         <section className="panel">
