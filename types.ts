@@ -9,4 +9,4 @@ export type TournamentSettings={id:number;title:string;subtitle:string;info_imag
 
 export type TournamentPrediction={id:string;user_id:string;team_id:string;created_at:string;users?:User;team?:TournamentTeam};
 
-export type TournamentMatch={id:string;round:'round_of_16'|'quarterfinal'|'semifinal'|'final';match_order:number;team1_id:string|null;team2_id:string|null;score1:number|null;score2:number|null;match_time:string|null;created_at:string;team1?:TournamentTeam;team2?:TournamentTeam};
+export type TournamentMatch={id:string;round:'round_of_16'|'quarterfinal'|'semifinal'|'final';match_order:number;team1_id:string|null;team2_id:string|null;winner_team_id:string|null;score1:number|null;score2:number|null;match_time:string|null;created_at:string;team1?:TournamentTeam;team2?:TournamentTeam;winner?:TournamentTeam};
