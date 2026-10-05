@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentMatch, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -10,6 +10,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [tournamentMatches, setTournamentMatches] = useState<TournamentMatch[]>([]);
   const [tournamentPredictions, setTournamentPredictions] = useState<TournamentPrediction[]>([]);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
   const [dismissedTournamentWinnerId, setDismissedTournamentWinnerId] = useState<string | null>(null);
@@ -29,12 +30,13 @@ export default function Home() {
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: ts }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: tm }, { data: ts }] = await Promise.all([
       supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(id,name,nickname,avatar_url,created_at))').order('created_at'),
       supabase.from('tournament_predictions').select('*,users(id,name,nickname,avatar_url,created_at),team:tournament_teams(id,name,status,created_at)').order('created_at'),
+      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*)').order('round').order('match_order'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     setUsers(u || []);
@@ -42,6 +44,7 @@ export default function Home() {
     setPreds((p as any) || []);
     setTeams((t as any) || []);
     setTournamentPredictions((tp as TournamentPrediction[]) || []);
+    setTournamentMatches((tm as TournamentMatch[]) || []);
     setTournamentSettings((ts as TournamentSettings | null) || null);
   }
 
@@ -69,6 +72,7 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_settings' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_predictions' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_matches' }, load)
       .subscribe();
 
     return () => {
@@ -530,6 +534,47 @@ export default function Home() {
                 ))}
               </div>
             )}
+          {tournamentMatches.length > 0 && (
+            <section className="panel tournament-bracket-panel">
+              <div className="landing-section-heading">
+                <div>
+                  <div className="landing-kicker">SƠ ĐỒ THI ĐẤU</div>
+                  <h2 className="section-title">Các cặp đấu</h2>
+                </div>
+              </div>
+              <div className="tournament-bracket-scroll">
+                <div className="tournament-bracket">
+                  {(['round_of_16','quarterfinal','semifinal','final'] as TournamentMatch['round'][]).map((round) => {
+                    const roundMatches = tournamentMatches.filter((match) => match.round === round).sort((a,b) => a.match_order - b.match_order);
+                    if (!roundMatches.length) return null;
+                    const roundTitle = round === 'round_of_16' ? 'VÒNG 1/8' : round === 'quarterfinal' ? 'TỨ KẾT' : round === 'semifinal' ? 'BÁN KẾT' : 'CHUNG KẾT';
+                    return (
+                      <div className={'tournament-bracket-round tournament-bracket-' + round} key={round}>
+                        <div className="tournament-bracket-round-title">{roundTitle}</div>
+                        <div className="tournament-bracket-matches">
+                          {roundMatches.map((match) => (
+                            <article className="tournament-bracket-match" key={match.id}>
+                              <div className="tournament-bracket-match-label">TRẬN {match.match_order}</div>
+                              <div className={'tournament-bracket-team ' + (match.score1 != null && match.score2 != null && match.score1 > match.score2 ? 'winner' : '')}>
+                                <span>{match.team1?.name || 'Đội 1'}</span>
+                                <b>{match.score1 != null ? match.score1 : '—'}</b>
+                              </div>
+                              <div className={'tournament-bracket-team ' + (match.score1 != null && match.score2 != null && match.score2 > match.score1 ? 'winner' : '')}>
+                                <span>{match.team2?.name || 'Đội 2'}</span>
+                                <b>{match.score2 != null ? match.score2 : '—'}</b>
+                              </div>
+                              {match.match_time && <div className="tournament-bracket-time">{new Date(match.match_time).toLocaleString('vi-VN')}</div>}
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           </div>
         </section>
       )}
