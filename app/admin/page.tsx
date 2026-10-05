@@ -18,8 +18,6 @@ export default function Admin() {
   const [matchOrder, setMatchOrder] = useState('1');
   const [matchTeam1, setMatchTeam1] = useState('');
   const [matchTeam2, setMatchTeam2] = useState('');
-  const [matchScore1, setMatchScore1] = useState('');
-  const [matchScore2, setMatchScore2] = useState('');
   const [matchTime, setMatchTime] = useState('');
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
@@ -145,8 +143,6 @@ export default function Admin() {
     setMatchOrder('1');
     setMatchTeam1('');
     setMatchTeam2('');
-    setMatchScore1('');
-    setMatchScore2('');
     setMatchTime('');
     setEditingMatchId(null);
   }
@@ -157,8 +153,6 @@ export default function Admin() {
     setMatchOrder(String(match.match_order));
     setMatchTeam1(match.team1_id || '');
     setMatchTeam2(match.team2_id || '');
-    setMatchScore1(match.score1 == null ? '' : String(match.score1));
-    setMatchScore2(match.score2 == null ? '' : String(match.score2));
     setMatchTime(match.match_time ? new Date(match.match_time).toISOString().slice(0, 16) : '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -180,8 +174,6 @@ export default function Admin() {
       match_order: order,
       team1_id: matchTeam1,
       team2_id: matchTeam2,
-      score1: matchScore1 === '' ? null : Number(matchScore1),
-      score2: matchScore2 === '' ? null : Number(matchScore2),
       match_time: matchTime ? new Date(matchTime).toISOString() : null,
     };
 
@@ -963,8 +955,6 @@ export default function Admin() {
                 <option value="">Đội 2</option>
                 {teams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}
               </select>
-              <input className="input" type="number" min="0" placeholder="Tỷ số 1" value={matchScore1} onChange={(e) => setMatchScore1(e.target.value)} />
-              <input className="input" type="number" min="0" placeholder="Tỷ số 2" value={matchScore2} onChange={(e) => setMatchScore2(e.target.value)} />
               <input className="input" type="datetime-local" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} />
               <div className="tournament-form-actions">
                 <button className="btn" type="submit">{editingMatchId ? 'Lưu trận' : 'Thêm trận'}</button>
@@ -977,12 +967,9 @@ export default function Admin() {
                 <div className="tournament-match-admin-row" key={match.id}>
                   <div>
                     <b>{match.round === 'round_of_16' ? 'Vòng 1/8' : match.round === 'quarterfinal' ? 'Tứ kết' : match.round === 'semifinal' ? 'Bán kết' : 'Chung kết'} · Trận {match.match_order}</b>
-                    <span>{match.team1?.name || 'Đội 1'} {match.score1 != null ? match.score1 : '-'} : {match.score2 != null ? match.score2 : '-'} {match.team2?.name || 'Đội 2'}</span>
+                    <span>{match.team1?.name || 'Đội 1'} vs {match.team2?.name || 'Đội 2'}</span>
                   </div>
-                  <div className="tournament-admin-card-actions">
-                    <button className="btn ghost compact" type="button" onClick={() => startEditMatch(match)}>Sửa</button>
-                    <button className="btn danger compact" type="button" onClick={() => deleteTournamentMatch(match)}>Xóa</button>
-                  </div>
+
                 </div>
               ))}
             </div>
