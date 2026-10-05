@@ -367,7 +367,7 @@ export default function Home() {
       </header>
 
       <nav className="tabs" aria-label="Các khu vực">
-        <a className={'tab ' + (tab === 'landing' ? 'active' : '')} href="#landing" aria-label="Giải đấu">
+        <a className={'tab ' + (tab === 'landing' ? 'active' : '')} href="#landing" aria-label="Giải đấu" onClick={() => setLandingMusicOn(true)}>
           <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v4a6 6 0 0 1-12 0z" /><path d="M8 13h8M10 17h4M9 21h6" /><path d="M4 5H2v2a4 4 0 0 0 4 4M20 5h2v2a4 4 0 0 1-4 4" /></svg>
           <span>Giải đấu</span>
         </a>
@@ -388,7 +388,7 @@ export default function Home() {
         <section className="landing-page">
           <div className="landing-banner" ref={landingBannerRef}>
             <div className="landing-banner-media" aria-hidden="true">
-              <img src="/bg-landingpage.jpg" alt="" />
+              <img src="/bg-landingpage.jpg" alt="" onError={(e) => { e.currentTarget.src = '/times-bg.jpg'; }} />
             </div>
             <div className="landing-banner-overlay" />
             <div className="landing-banner-content">
