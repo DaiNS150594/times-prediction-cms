@@ -89,6 +89,16 @@ export default function Admin() {
     if (session) load();
   }, [session]);
 
+  useEffect(() => {
+    if (!session) return;
+    const channel = supabase
+      .channel('admin-tournament-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_teams' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_matches' }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [session]);
+
   async function login(e: any) {
     e.preventDefault();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -442,68 +452,34 @@ export default function Admin() {
   async function setTeamStatus(team: TournamentTeam, status: 'advanced' | 'stopped') {
     const label = status === 'advanced' ? 'Đi Tiếp' : 'Dừng bước';
     if (!confirm('Đánh dấu đội "' + team.name + '" là "' + label + '"?')) return;
+    const { error } = await supabase.from('tournament_teams').update({ status }).eq('id', team.id);
+    if (error) { alert('Không thể cập nhật trạng thái đội: ' + error.message); return; }
 
-    const { error } = await supabase
-      .from('tournament_teams')
-      .update({ status })
-      .eq('id', team.id);
-
-    if (error) {
-      alert('Không thể cập nhật trạng thái đội: ' + error.message);
-      return;
-    }
-
-    // "Đi Tiếp" / "Dừng bước" is the source of truth for the bracket result.
-    // Find the match containing this team, store the winner, then place the winner
-    // into the correct slot of the next round automatically.
-    const match = tournamentMatches.find(
-      (item) => item.team1_id === team.id || item.team2_id === team.id
-    );
-
+    const match = tournamentMatches.find((item) => item.team1_id === team.id || item.team2_id === team.id);
     if (match) {
-      const winnerTeamId = status === 'advanced' ? team.id : null;
+      const winnerTeamId = status === 'advanced'
+        ? team.id
+        : match.team1_id === team.id ? match.team2_id : match.team1_id;
 
-      const { error: matchError } = await supabase
-        .from('tournament_matches')
-        .update({ winner_team_id: winnerTeamId })
-        .eq('id', match.id);
-
-      if (matchError) {
-        alert('Đã đổi trạng thái đội nhưng không thể cập nhật sơ đồ: ' + matchError.message);
-        await load();
-        return;
-      }
+      const { error: matchError } = await supabase.from('tournament_matches')
+        .update({ winner_team_id: winnerTeamId }).eq('id', match.id);
+      if (matchError) { alert('Không thể cập nhật đội thắng trong sơ đồ: ' + matchError.message); await load(); return; }
 
       const nextRoundMap: Record<TournamentMatch['round'], TournamentMatch['round'] | null> = {
-        round_of_16: 'quarterfinal',
-        quarterfinal: 'semifinal',
-        semifinal: 'final',
-        final: null,
+        round_of_16: 'quarterfinal', quarterfinal: 'semifinal', semifinal: 'final', final: null,
       };
-
       const nextRound = nextRoundMap[match.round];
-
-      if (nextRound) {
+      if (nextRound && winnerTeamId) {
         const nextOrder = Math.ceil(match.match_order / 2);
         const nextSlotIsTeam1 = match.match_order % 2 === 1;
-
-        const nextMatch = tournamentMatches.find(
-          (item) => item.round === nextRound && item.match_order === nextOrder
-        );
-
+        const nextMatch = tournamentMatches.find((item) => item.round === nextRound && item.match_order === nextOrder);
         if (nextMatch) {
-          const update: Record<string, string | null> = {
-            [nextSlotIsTeam1 ? 'team1_id' : 'team2_id']: winnerTeamId,
-          };
-
-          await supabase
-            .from('tournament_matches')
-            .update(update)
+          await supabase.from('tournament_matches')
+            .update({ [nextSlotIsTeam1 ? 'team1_id' : 'team2_id']: winnerTeamId })
             .eq('id', nextMatch.id);
         }
       }
     }
-
     await load();
   }
 
@@ -1018,13 +994,19 @@ export default function Admin() {
             </form>
 
             <div className="tournament-match-admin-list">
-              {tournamentMatches.map((match) => (
+              {[...tournamentMatches].sort((a, b) => {
+                const order: Record<TournamentMatch['round'], number> = { round_of_16: 1, quarterfinal: 2, semifinal: 3, final: 4 };
+                return order[a.round] - order[b.round] || a.match_order - b.match_order;
+              }).map((match) => (
                 <div className="tournament-match-admin-row" key={match.id}>
                   <div>
                     <b>{match.round === 'round_of_16' ? 'Vòng 1/8' : match.round === 'quarterfinal' ? 'Tứ kết' : match.round === 'semifinal' ? 'Bán kết' : 'Chung kết'} · Trận {match.match_order}</b>
-                    <span>{match.team1?.name || 'Đội 1'} vs {match.team2?.name || 'Đội 2'}</span>
+                    <span>{match.team1?.name || 'Đội 1'} vs {match.team2?.name || 'Đội 2'}{match.winner?.name ? ' · Đi tiếp: ' + match.winner.name : ''}</span>
                   </div>
-
+                  <div className="tournament-admin-card-actions">
+                    <button className="btn ghost compact" type="button" onClick={() => startEditMatch(match)}>Sửa</button>
+                    <button className="btn danger compact" type="button" onClick={() => deleteTournamentMatch(match)}>Xóa</button>
+                  </div>
                 </div>
               ))}
             </div>
