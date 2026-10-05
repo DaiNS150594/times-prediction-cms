@@ -6,3 +6,5 @@ export type TournamentTeamMember={id:string;team_id:string;user_id:string;users?
 export type TournamentTeam={id:string;name:string;status:'active'|'advanced'|'stopped';created_at:string;team_members?:TournamentTeamMember[]};
 
 export type TournamentSettings={id:number;title:string;subtitle:string;info_image_url:string|null;info_image_path:string|null;updated_at:string};
+
+export type TournamentPrediction={id:string;user_id:string;team_id:string;created_at:string;users?:User;team?:TournamentTeam};
