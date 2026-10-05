@@ -1522,3 +1522,133 @@ body:after{
     line-height:1.25;
   }
 }
+
+
+/* ===== Tournament landing page ===== */
+.landing-page{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.landing-banner{
+  --landing-parallax-y:0px;
+  position:relative;
+  width:100vw;
+  margin-left:calc(50% - 50vw);
+  min-height:min(620px,72vh);
+  overflow:hidden;
+  isolation:isolate;
+  border-top:1px solid rgba(191,219,237,.24);
+  border-bottom:1px solid rgba(191,219,237,.24);
+  background:#031522;
+  box-shadow:0 20px 55px rgba(0,0,0,.24);
+}
+.landing-banner-media{
+  position:absolute;
+  inset:-12%;
+  z-index:-2;
+  transform:translate3d(0,var(--landing-parallax-y),0) scale(1.08);
+  will-change:transform;
+}
+.landing-banner-media img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  filter:saturate(1.08) contrast(1.04);
+}
+.landing-banner-overlay{
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:
+    linear-gradient(90deg,rgba(2,12,22,.90) 0%,rgba(3,17,29,.62) 42%,rgba(3,17,29,.20) 100%),
+    linear-gradient(180deg,rgba(3,14,25,.12),rgba(3,14,25,.72));
+}
+.landing-banner-content{
+  width:min(1180px,100%);
+  min-height:inherit;
+  margin:auto;
+  padding:80px 34px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+}
+.landing-kicker{
+  color:#ff9b58;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+}
+.landing-banner h2{
+  margin:10px 0 4px;
+  font-size:clamp(48px,8vw,96px);
+  line-height:.95;
+  letter-spacing:.04em;
+  color:#fff;
+  text-shadow:0 10px 35px rgba(0,0,0,.48);
+}
+.landing-banner p{
+  margin:12px 0 26px;
+  color:#dce8f0;
+  font-size:clamp(17px,2.2vw,24px);
+}
+.landing-banner-button{
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.landing-intro{
+  max-width:900px;
+  margin:0 auto;
+  width:100%;
+}
+.landing-intro .section-title{
+  margin:7px 0 8px;
+}
+.landing-intro-text{
+  margin:0;
+  color:#a9bac8;
+  font-size:15px;
+  line-height:1.7;
+}
+@media(max-width:650px){
+  .landing-banner{
+    min-height:520px;
+    border-radius:0;
+  }
+  .landing-banner-media{
+    inset:-18%;
+  }
+  .landing-banner-overlay{
+    background:
+      linear-gradient(180deg,rgba(2,12,22,.18) 0%,rgba(3,17,29,.56) 48%,rgba(3,17,29,.92) 100%);
+  }
+  .landing-banner-content{
+    padding:50px 22px 54px;
+    justify-content:flex-end;
+  }
+  .landing-banner h2{
+    font-size:clamp(42px,15vw,68px);
+  }
+  .landing-banner p{
+    margin-bottom:20px;
+    font-size:16px;
+  }
+  .landing-banner-button{
+    width:100%;
+  }
+  .landing-intro{
+    padding:16px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .landing-banner-media{
+    transform:scale(1.08);
+  }
+}
