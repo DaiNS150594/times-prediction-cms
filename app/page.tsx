@@ -148,8 +148,6 @@ export default function Home() {
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
   const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
-  const submittedChampionUserIds = new Set(tournamentPredictions.map((prediction) => prediction.user_id));
-  const availableChampionUsers = users.filter((user) => !submittedChampionUserIds.has(user.id));
   const tournamentWinner = remainingTournamentTeams.length === 1 && teams.some((team) => team.status === 'stopped')
     ? remainingTournamentTeams[0]
     : null;
