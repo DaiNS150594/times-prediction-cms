@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentSettings, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -10,6 +10,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [tournamentPredictions, setTournamentPredictions] = useState<TournamentPrediction[]>([]);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
   const [dismissedTournamentWinnerId, setDismissedTournamentWinnerId] = useState<string | null>(null);
   const [landingMusicOn, setLandingMusicOn] = useState(false);
@@ -21,22 +22,26 @@ export default function Home() {
   const [submitPin, setSubmitPin] = useState('');
   const [submitNumber, setSubmitNumber] = useState('');
   const [submitMessage, setSubmitMessage] = useState('');
+  const [submitChampionTeamId, setSubmitChampionTeamId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [infoImageOpen, setInfoImageOpen] = useState(false);
   const [dismissedWinnerEventId, setDismissedWinnerEventId] = useState<string | null>(null);
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: ts }] = await Promise.all([
       supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(id,name,nickname,avatar_url,created_at))').order('created_at'),
+      supabase.from('tournament_predictions').select('*,users(id,name,nickname,avatar_url,created_at),team:tournament_teams(id,name,status,created_at)').order('created_at'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     setUsers(u || []);
     setEvents(e || []);
     setPreds((p as any) || []);
     setTeams((t as any) || []);
+    setTournamentPredictions((tp as TournamentPrediction[]) || []);
     setTournamentSettings((ts as TournamentSettings | null) || null);
   }
 
@@ -63,6 +68,7 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_teams' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_settings' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_predictions' }, load)
       .subscribe();
 
     return () => {
@@ -141,6 +147,9 @@ export default function Home() {
   const submittedUserIds = new Set(current.map((p) => p.user_id));
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
+  const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
+  const submittedChampionUserIds = new Set(tournamentPredictions.map((prediction) => prediction.user_id));
+  const availableChampionUsers = users.filter((user) => !submittedChampionUserIds.has(user.id));
   const tournamentWinner = remainingTournamentTeams.length === 1 && teams.some((team) => team.status === 'stopped')
     ? remainingTournamentTeams[0]
     : null;
@@ -195,6 +204,11 @@ export default function Home() {
       return;
     }
 
+    if (tournamentOpen && !submitChampionTeamId) {
+      setSubmitMessage('Hãy chọn đội bạn dự đoán sẽ vô địch.');
+      return;
+    }
+
     setSubmitting(true);
     const { error } = await supabase.rpc('submit_prediction_with_pin', {
       p_event_id: active.id,
@@ -221,10 +235,25 @@ export default function Home() {
       return;
     }
 
+    if (tournamentOpen && submitChampionTeamId) {
+      const championResult = await supabase.rpc('submit_tournament_prediction_with_pin', {
+        p_user_id: submitUserId,
+        p_team_id: submitChampionTeamId,
+        p_pin_code: submitPin,
+      });
+
+      if (championResult.error) {
+        setSubmitMessage('Dự đoán số đã được ghi nhận nhưng chưa lưu được đội vô địch: ' + championResult.error.message);
+        await load();
+        return;
+      }
+    }
+
     setSubmitMessage('Đã ghi nhận dự đoán. Bạn chỉ được gửi 1 lần cho sự kiện này.');
     setSubmitUserId('');
     setSubmitPin('');
     setSubmitNumber('');
+    setSubmitChampionTeamId('');
     await load();
   }
 
@@ -270,6 +299,16 @@ export default function Home() {
               Tuyệt vời!
             </button>
           </section>
+        </div>
+      )}
+
+      {infoImageOpen && tournamentSettings?.info_image_url && (
+        <div className="tournament-info-lightbox" role="dialog" aria-modal="true" aria-label="Thông tin giải đấu">
+          <button type="button" className="tournament-info-lightbox-backdrop" aria-label="Đóng ảnh" onClick={() => setInfoImageOpen(false)} />
+          <div className="tournament-info-lightbox-content">
+            <button type="button" className="winner-popup-close" aria-label="Đóng ảnh" onClick={() => setInfoImageOpen(false)}>×</button>
+            <img src={tournamentSettings.info_image_url} alt="Thông tin giải đấu phóng to" />
+          </div>
         </div>
       )}
 
@@ -441,9 +480,14 @@ export default function Home() {
                   <h2 className="section-title">Thông tin giải đấu</h2>
                 </div>
               </div>
-              <div className="tournament-info-image-wrap">
+              <button
+                type="button"
+                className="tournament-info-image-wrap tournament-info-image-button"
+                onClick={() => setInfoImageOpen(true)}
+                aria-label="Phóng to thông tin giải đấu"
+              >
                 <img src={tournamentSettings.info_image_url} alt="Thông tin giải đấu" />
-              </div>
+              </button>
             </section>
           )}
 
@@ -553,6 +597,22 @@ export default function Home() {
                   }}
                   required
                 />
+                {tournamentOpen && (
+                  <select
+                    className="input tournament-champion-select"
+                    value={submitChampionTeamId}
+                    onChange={(e) => {
+                      setSubmitChampionTeamId(e.target.value);
+                      setSubmitMessage('');
+                    }}
+                    required
+                  >
+                    <option value="">Chọn đội dự đoán vô địch</option>
+                    {remainingTournamentTeams.map((team) => (
+                      <option value={team.id} key={team.id}>{team.name}</option>
+                    ))}
+                  </select>
+                )}
                 <input
                   className="input two-digit-input"
                   type="text"
