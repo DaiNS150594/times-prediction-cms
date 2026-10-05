@@ -455,7 +455,18 @@ export default function Admin() {
     const { error } = await supabase.from('tournament_teams').update({ status }).eq('id', team.id);
     if (error) { alert('Không thể cập nhật trạng thái đội: ' + error.message); return; }
 
-    const match = tournamentMatches.find((item) => item.team1_id === team.id || item.team2_id === team.id);
+    const roundRank: Record<TournamentMatch['round'], number> = {
+      round_of_16: 1,
+      quarterfinal: 2,
+      semifinal: 3,
+      final: 4,
+    };
+
+    // A team can appear in previous rounds and the current round.
+    // Always use the latest round containing this team.
+    const match = [...tournamentMatches]
+      .filter((item) => item.team1_id === team.id || item.team2_id === team.id)
+      .sort((a, b) => roundRank[b.round] - roundRank[a.round] || b.match_order - a.match_order)[0];
     if (match) {
       const winnerTeamId = status === 'advanced'
         ? team.id
