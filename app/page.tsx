@@ -36,7 +36,7 @@ export default function Home() {
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(id,name,nickname,avatar_url,created_at))').order('created_at'),
       supabase.from('tournament_predictions').select('*,users(id,name,nickname,avatar_url,created_at),team:tournament_teams(id,name,status,created_at)').order('created_at'),
-      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*)').order('round').order('match_order'),
+      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*),winner:tournament_teams!tournament_matches_winner_team_id_fkey(*)').order('round').order('match_order'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     setUsers(u || []);
@@ -555,13 +555,13 @@ export default function Home() {
                           {roundMatches.map((match) => (
                             <article className="tournament-bracket-match" key={match.id}>
                               <div className="tournament-bracket-match-label">TRẬN {match.match_order}</div>
-                              <div className={'tournament-bracket-team ' + (match.score1 != null && match.score2 != null && match.score1 > match.score2 ? 'winner' : '')}>
+                              <div className={'tournament-bracket-team ' + (match.winner_team_id === match.team1_id ? 'winner' : '')}>
                                 <span>{match.team1?.name || 'Đội 1'}</span>
-                                <b>{match.score1 != null ? match.score1 : '—'}</b>
+                                {match.winner_team_id === match.team1_id && <b>✓</b>}
                               </div>
-                              <div className={'tournament-bracket-team ' + (match.score1 != null && match.score2 != null && match.score2 > match.score1 ? 'winner' : '')}>
+                              <div className={'tournament-bracket-team ' + (match.winner_team_id === match.team2_id ? 'winner' : '')}>
                                 <span>{match.team2?.name || 'Đội 2'}</span>
-                                <b>{match.score2 != null ? match.score2 : '—'}</b>
+                                {match.winner_team_id === match.team2_id && <b>✓</b>}
                               </div>
                               {match.match_time && <div className="tournament-bracket-time">{new Date(match.match_time).toLocaleString('vi-VN')}</div>}
                             </article>
