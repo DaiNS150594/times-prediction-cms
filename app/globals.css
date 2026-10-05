@@ -1585,29 +1585,55 @@ body:after{
 .tournament-bracket-scroll{
   width:100%;
   overflow-x:auto;
-  padding:8px 2px 14px;
+  padding:16px 8px 24px;
+  scrollbar-width:thin;
 }
 .tournament-bracket{
-  min-width:920px;
+  position:relative;
+  min-width:1060px;
+  min-height:610px;
   display:grid;
-  grid-template-columns:repeat(4,minmax(190px,1fr));
-  gap:22px;
+  grid-template-columns:repeat(4,minmax(210px,1fr));
+  gap:52px;
   align-items:stretch;
+  padding:0 14px;
+}
+.tournament-bracket-lines{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  pointer-events:none;
+}
+.tournament-bracket-line{
+  fill:none;
+  stroke:rgba(255,111,78,.72);
+  stroke-width:2.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 0 3px rgba(255,77,82,.22));
 }
 .tournament-bracket-round{
   position:relative;
+  z-index:1;
   min-width:0;
+  display:flex;
+  flex-direction:column;
 }
 .tournament-bracket-round-title{
-  margin-bottom:12px;
+  flex:0 0 auto;
+  margin:0 0 22px;
   text-align:center;
-  color:#ff9b58;
-  font-size:11px;
+  color:#ff9551;
+  font-size:12px;
   font-weight:900;
   letter-spacing:.12em;
 }
 .tournament-bracket-matches{
-  min-height:420px;
+  flex:1;
+  min-height:520px;
   display:flex;
   flex-direction:column;
   justify-content:space-around;
@@ -1615,122 +1641,98 @@ body:after{
 }
 .tournament-bracket-match{
   position:relative;
-  border:1px solid rgba(171,207,232,.22);
+  width:100%;
+  min-height:124px;
+  padding:10px;
+  border:1px solid rgba(142,194,225,.30);
   border-radius:14px;
-  padding:8px;
-  background:linear-gradient(180deg,rgba(12,42,64,.82),rgba(5,24,39,.88));
-  box-shadow:0 12px 28px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.04);
+  background:linear-gradient(145deg,rgba(13,43,65,.94),rgba(5,25,41,.96));
+  box-shadow:0 12px 28px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.035);
 }
 .tournament-bracket-match-label{
-  margin:0 2px 6px;
-  color:#8199aa;
+  margin:0 2px 7px;
+  color:#7f99aa;
   font-size:9px;
   font-weight:900;
-  letter-spacing:.08em;
+  letter-spacing:.10em;
 }
 .tournament-bracket-team{
-  min-height:34px;
+  min-height:36px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  padding:7px 8px;
+  padding:7px 9px;
+  border:1px solid transparent;
   border-radius:9px;
-  color:#dbe7ee;
-  background:rgba(255,255,255,.035);
+  color:#edf6fb;
+  background:rgba(27,58,81,.58);
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
 }
 .tournament-bracket-team + .tournament-bracket-team{
-  margin-top:4px;
+  margin-top:5px;
 }
-.tournament-bracket-team span{
+.tournament-bracket-team-name{
   min-width:0;
+  display:flex;
+  align-items:center;
+  gap:7px;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.tournament-bracket-team b{
-  flex:0 0 22px;
-  text-align:center;
-  color:#ff9a3d;
+.tournament-bracket-team-mark{
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.10);
+  color:#9bb2c2;
+  font-size:9px;
+  font-weight:900;
 }
 .tournament-bracket-team.winner{
-  border:1px solid rgba(58,205,148,.42);
-  background:rgba(35,171,122,.10);
+  border-color:rgba(52,218,164,.70);
+  background:linear-gradient(90deg,rgba(23,116,101,.28),rgba(10,71,73,.22));
+}
+.tournament-bracket-team.winner .tournament-bracket-team-mark{
+  background:rgba(48,213,159,.16);
+  color:#45e2aa;
 }
 .tournament-bracket-team.winner b{
-  color:#45d99e;
+  color:#45e2aa;
+  font-size:15px;
+}
+.tournament-bracket-team.placeholder{
+  color:#8499a7;
+  background:rgba(255,255,255,.035);
+  border-color:rgba(150,177,194,.08);
+  font-weight:700;
+}
+.tournament-bracket-team.placeholder .tournament-bracket-team-mark{
+  background:rgba(130,151,166,.16);
+  color:#9baeba;
 }
 .tournament-bracket-time{
-  margin:7px 2px 0;
-  color:#8199aa;
+  margin:8px 2px 0;
+  color:#819aaa;
   font-size:9px;
+  line-height:1.2;
 }
-.tournament-bracket-quarterfinal .tournament-bracket-matches{padding-top:28px;padding-bottom:28px}
-.tournament-bracket-semifinal .tournament-bracket-matches{padding-top:92px;padding-bottom:92px}
-.tournament-bracket-final .tournament-bracket-matches{padding-top:156px;padding-bottom:156px}
-.tournament-bracket-quarterfinal .tournament-bracket-match::after,
-.tournament-bracket-semifinal .tournament-bracket-match::after,
-.tournament-bracket-final .tournament-bracket-match::after{
-  content:"";
-  position:absolute;
-  top:50%;
-  right:-23px;
-  width:22px;
-  border-top:1px solid rgba(126,194,231,.42);
+.tournament-bracket-quarterfinal .tournament-bracket-matches{
+  padding-top:78px;
+  padding-bottom:78px;
 }
-.tournament-bracket-quarterfinal .tournament-bracket-match::before,
-.tournament-bracket-semifinal .tournament-bracket-match::before,
-.tournament-bracket-final .tournament-bracket-match::before{
-  content:"";
-  position:absolute;
-  top:50%;
-  left:-23px;
-  width:22px;
-  border-top:1px solid rgba(126,194,231,.42);
+.tournament-bracket-semifinal .tournament-bracket-matches{
+  padding-top:180px;
+  padding-bottom:180px;
 }
-.tournament-bracket-admin{
-  margin:18px 0;
-  padding:16px;
-  border:1px solid rgba(171,207,232,.16);
-  border-radius:16px;
-  background:rgba(3,18,31,.28);
-}
-.tournament-match-form{
-  display:grid;
-  grid-template-columns:1fr 100px 1fr 1fr 190px;
-  gap:8px;
-  align-items:center;
-  margin-top:12px;
-}
-.tournament-match-form .tournament-form-actions{
-  grid-column:1 / -1;
-}
-.tournament-match-admin-list{
-  display:grid;
-  gap:8px;
-  margin-top:14px;
-}
-.tournament-match-admin-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:10px 12px;
-  border:1px solid rgba(171,207,232,.14);
-  border-radius:12px;
-  background:rgba(7,29,46,.42);
-}
-.tournament-match-admin-row > div:first-child{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  min-width:0;
-}
-.tournament-match-admin-row span{
-  color:#b8cad5;
-  font-size:12px;
+.tournament-bracket-final .tournament-bracket-matches{
+  padding-top:231px;
+  padding-bottom:231px;
 }
 @media(max-width:650px){
   .tournament-bracket-panel{
