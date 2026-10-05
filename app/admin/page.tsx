@@ -40,6 +40,7 @@ export default function Admin() {
   const [editUserPin, setEditUserPin] = useState('');
   const [manualPredictionUserId, setManualPredictionUserId] = useState('');
   const [manualPredictionNumber, setManualPredictionNumber] = useState('');
+  const [manualChampionTeamId, setManualChampionTeamId] = useState('');
   const [editingPredictionId, setEditingPredictionId] = useState<string | null>(null);
   const [editingPredictionValue, setEditingPredictionValue] = useState('');
   const [editingEventTitle, setEditingEventTitle] = useState(false);
@@ -108,6 +109,8 @@ export default function Admin() {
   const activePreds = active ? preds.filter((p) => p.event_id === active.id) : [];
   const activePredUserIds = new Set(activePreds.map((p) => p.user_id));
   const availablePredictionUsers = users.filter((u) => !activePredUserIds.has(u.id));
+  const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
+  const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
 
   const sortedActivePreds = [...activePreds].sort((a, b) => {
     const nameA = (a.users?.name || '').toLocaleLowerCase('vi');
@@ -542,6 +545,11 @@ export default function Admin() {
       return;
     }
 
+    if (tournamentOpen && !manualChampionTeamId) {
+      alert('Hãy chọn đội dự đoán vô địch.');
+      return;
+    }
+
     const { error } = await supabase.from('predictions').insert({
       event_id: active.id,
       user_id: manualPredictionUserId,
@@ -553,8 +561,27 @@ export default function Admin() {
       return;
     }
 
+    if (tournamentOpen && manualChampionTeamId) {
+      const { error: championError } = await supabase
+        .from('tournament_predictions')
+        .upsert(
+          {
+            user_id: manualPredictionUserId,
+            team_id: manualChampionTeamId,
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (championError) {
+        await supabase.from('predictions').delete().eq('event_id', active.id).eq('user_id', manualPredictionUserId);
+        alert('Không thể lưu đội vô địch: ' + championError.message);
+        return;
+      }
+    }
+
     setManualPredictionUserId('');
     setManualPredictionNumber('');
+    setManualChampionTeamId('');
     load();
   }
 
@@ -1025,6 +1052,19 @@ export default function Admin() {
                       </option>
                     ))}
                   </select>
+                  {tournamentOpen && (
+                    <select
+                      className="input admin-manual-champion"
+                      value={manualChampionTeamId}
+                      onChange={(e) => setManualChampionTeamId(e.target.value)}
+                      required
+                    >
+                      <option value="">Chọn đội vô địch</option>
+                      {remainingTournamentTeams.map((team) => (
+                        <option value={team.id} key={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  )}
                   <input
                     className="input two-digit-input admin-manual-number"
                     type="text"
