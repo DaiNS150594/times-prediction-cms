@@ -148,6 +148,10 @@ export default function Home() {
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
   const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
+
+  function getChampionPrediction(userId: string) {
+    return tournamentPredictions.find((prediction) => prediction.user_id === userId);
+  }
   const tournamentWinner = remainingTournamentTeams.length === 1 && teams.some((team) => team.status === 'stopped')
     ? remainingTournamentTeams[0]
     : null;
@@ -675,6 +679,11 @@ export default function Home() {
                     <div className="prediction-name-copy">
                       <b>{p.users?.name}</b>
                       <span>{p.users?.nickname || '—'}</span>
+                      {getChampionPrediction(p.user_id)?.team?.name && (
+                        <small className="prediction-champion-badge" title="Đội dự đoán vô địch">
+                          🏆 {getChampionPrediction(p.user_id)?.team?.name}
+                        </small>
+                      )}
                     </div>
                   </div>
                   <div className="prediction-number-pill">{formatTwoDigits(p.prediction)}</div>
@@ -694,9 +703,16 @@ export default function Home() {
                           src={p.users?.avatar_url || '/avatar.svg'}
                           alt={p.users?.name || 'Avatar'}
                         />
-                        <span className="prediction-number-person-name">
-                          {p.users?.name || 'Người tham gia'}
-                        </span>
+                        <div className="prediction-number-person-copy">
+                          <span className="prediction-number-person-name">
+                            {p.users?.name || 'Người tham gia'}
+                          </span>
+                          {getChampionPrediction(p.user_id)?.team?.name && (
+                            <small className="prediction-champion-badge compact" title="Đội dự đoán vô địch">
+                              🏆 {getChampionPrediction(p.user_id)?.team?.name}
+                            </small>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
