@@ -466,16 +466,20 @@ export default function Home() {
       )}
 
       <main className="wrap">
-      <div className="topbar">
-        <span></span>
-        <a className="admin-link" href="/admin">CMS Admin →</a>
-      </div>
+      {tab !== 'landing' && (
+        <>
+          <div className="topbar">
+            <span></span>
+            <a className="admin-link" href="/admin">CMS Admin →</a>
+          </div>
 
-      <header className="hero">
-        <p className="eyebrow">Realtime prediction board</p>
-        <h1>FAM - TIMES</h1>
-        <p>Chơi game bằng thực lực!</p>
-      </header>
+          <header className="hero">
+            <p className="eyebrow">Realtime prediction board</p>
+            <h1>FAM - TIMES</h1>
+            <p>Chơi game bằng thực lực!</p>
+          </header>
+        </>
+      )}
 
       <nav className="tabs" aria-label="Các khu vực">
         <a className={'tab ' + (tab === 'landing' ? 'active' : '')} href="#landing" aria-label="Giải đấu" onClick={() => setLandingMusicOn(true)}>
