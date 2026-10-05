@@ -62,7 +62,7 @@ export default function Admin() {
       supabase.from('predictions').select('*,users(*)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(*))').order('created_at'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
-      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*)').order('round').order('match_order'),
+      supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*),winner:tournament_teams!tournament_matches_winner_team_id_fkey(*)').order('round').order('match_order'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
@@ -174,6 +174,7 @@ export default function Admin() {
       match_order: order,
       team1_id: matchTeam1,
       team2_id: matchTeam2,
+      winner_team_id: null,
       match_time: matchTime ? new Date(matchTime).toISOString() : null,
     };
 
@@ -441,15 +442,69 @@ export default function Admin() {
   async function setTeamStatus(team: TournamentTeam, status: 'advanced' | 'stopped') {
     const label = status === 'advanced' ? 'Đi Tiếp' : 'Dừng bước';
     if (!confirm('Đánh dấu đội "' + team.name + '" là "' + label + '"?')) return;
+
     const { error } = await supabase
       .from('tournament_teams')
       .update({ status })
       .eq('id', team.id);
+
     if (error) {
       alert('Không thể cập nhật trạng thái đội: ' + error.message);
       return;
     }
-    load();
+
+    // "Đi Tiếp" / "Dừng bước" is the source of truth for the bracket result.
+    // Find the match containing this team, store the winner, then place the winner
+    // into the correct slot of the next round automatically.
+    const match = tournamentMatches.find(
+      (item) => item.team1_id === team.id || item.team2_id === team.id
+    );
+
+    if (match) {
+      const winnerTeamId = status === 'advanced' ? team.id : null;
+
+      const { error: matchError } = await supabase
+        .from('tournament_matches')
+        .update({ winner_team_id: winnerTeamId })
+        .eq('id', match.id);
+
+      if (matchError) {
+        alert('Đã đổi trạng thái đội nhưng không thể cập nhật sơ đồ: ' + matchError.message);
+        await load();
+        return;
+      }
+
+      const nextRoundMap: Record<TournamentMatch['round'], TournamentMatch['round'] | null> = {
+        round_of_16: 'quarterfinal',
+        quarterfinal: 'semifinal',
+        semifinal: 'final',
+        final: null,
+      };
+
+      const nextRound = nextRoundMap[match.round];
+
+      if (nextRound) {
+        const nextOrder = Math.ceil(match.match_order / 2);
+        const nextSlotIsTeam1 = match.match_order % 2 === 1;
+
+        const nextMatch = tournamentMatches.find(
+          (item) => item.round === nextRound && item.match_order === nextOrder
+        );
+
+        if (nextMatch) {
+          const update: Record<string, string | null> = {
+            [nextSlotIsTeam1 ? 'team1_id' : 'team2_id']: winnerTeamId,
+          };
+
+          await supabase
+            .from('tournament_matches')
+            .update(update)
+            .eq('id', nextMatch.id);
+        }
+      }
+    }
+
+    await load();
   }
 
   async function addUser(e: any) {
