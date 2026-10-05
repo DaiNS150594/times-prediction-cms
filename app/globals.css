@@ -1010,6 +1010,35 @@ body:after{
   gap:7px;
   min-width:0;
 }
+.prediction-champion-badge{
+  display:block;
+  width:max-content;
+  max-width:180px;
+  margin-top:3px;
+  padding:2px 7px;
+  border:1px solid rgba(255,166,74,.22);
+  border-radius:999px;
+  background:rgba(255,139,43,.09);
+  color:#ffad5d;
+  font-size:10px;
+  line-height:1.25;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.prediction-number-person-copy{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.prediction-champion-badge.compact{
+  margin-top:2px;
+  max-width:120px;
+  padding:1px 5px;
+  font-size:9px;
+}
 .prediction-number-person-name{
   color:#d7e4ec;
   font-size:13px;
