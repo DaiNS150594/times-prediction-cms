@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -10,6 +10,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [preds, setPreds] = useState<Prediction[]>([]);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
   const [dismissedTournamentWinnerId, setDismissedTournamentWinnerId] = useState<string | null>(null);
   const [landingMusicOn, setLandingMusicOn] = useState(false);
   const [landingTrackIndex, setLandingTrackIndex] = useState(0);
@@ -25,16 +26,18 @@ export default function Home() {
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }] = await Promise.all([
       supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
       supabase.from('tournament_teams').select('*,team_members(*,users(id,name,nickname,avatar_url,created_at))').order('created_at'),
+      supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     setUsers(u || []);
     setEvents(e || []);
     setPreds((p as any) || []);
     setTeams((t as any) || []);
+    setTournamentSettings((ts as TournamentSettings | null) || null);
   }
 
   useEffect(() => {
@@ -59,6 +62,7 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_teams' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_settings' }, load)
       .subscribe();
 
     return () => {
@@ -69,6 +73,13 @@ export default function Home() {
 
   useEffect(() => {
     if (tab !== 'landing') return;
+
+    let scrollFrame = window.requestAnimationFrame(() => {
+      if (landingBannerRef.current) {
+        const top = landingBannerRef.current.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top, behavior: 'auto' });
+      }
+    });
 
     let frame = 0;
     const updateParallax = () => {
@@ -90,6 +101,7 @@ export default function Home() {
     window.addEventListener('resize', onScroll);
 
     return () => {
+      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       if (frame) window.cancelAnimationFrame(frame);
@@ -388,13 +400,15 @@ export default function Home() {
         <section className="landing-page">
           <div className="landing-banner" ref={landingBannerRef}>
             <div className="landing-banner-media" aria-hidden="true">
-              <img src="/bg-landingpage.jpg" alt="" onError={(e) => { e.currentTarget.src = '/times-bg.jpg'; }} />
+              <video autoPlay muted loop playsInline preload="auto">
+                <source src="/fam-times-bg-no-text-web.mp4" type="video/mp4" />
+              </video>
             </div>
             <div className="landing-banner-overlay" />
             <div className="landing-banner-content">
               <div className="landing-kicker">FAM - TIMES</div>
-              <h2>GIẢI ĐẤU</h2>
-              <p>Chơi game bằng thực lực!</p>
+              <h2>{tournamentSettings?.title || 'GIẢI ĐẤU'}</h2>
+              <p>{tournamentSettings?.subtitle || 'Chơi game bằng thực lực!'}</p>
               <div className="landing-banner-actions">
                 <a className="btn landing-banner-button" href="#current">Tham gia dự đoán</a>
                 <button
@@ -418,6 +432,20 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {tournamentSettings?.info_image_url && (
+            <section className="panel tournament-info-panel">
+              <div className="landing-section-heading">
+                <div>
+                  <div className="landing-kicker">THÔNG TIN</div>
+                  <h2 className="section-title">Thông tin giải đấu</h2>
+                </div>
+              </div>
+              <div className="tournament-info-image-wrap">
+                <img src={tournamentSettings.info_image_url} alt="Thông tin giải đấu" />
+              </div>
+            </section>
+          )}
 
           <div className="panel landing-intro">
             <div className="landing-section-heading">
