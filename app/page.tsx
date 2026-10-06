@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, TournamentMatch, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
 
@@ -28,6 +29,8 @@ export default function Home() {
   const [infoImageOpen, setInfoImageOpen] = useState(false);
   const [dismissedWinnerEventId, setDismissedWinnerEventId] = useState<string | null>(null);
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
+  const predictionBoardRef = useRef<HTMLDivElement | null>(null);
+  const [sharingPredictionBoard, setSharingPredictionBoard] = useState(false);
 
   async function load() {
     const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: tm }, { data: ts }] = await Promise.all([
@@ -830,34 +833,86 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="prediction-number-list">
-              {groupedCurrent.map((group) => (
-                <div className="prediction-number-row" key={group.number}>
-                  <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
-                  <div className="prediction-number-avatars">
-                    {group.predictions.map((p) => (
-                      <div className="prediction-number-person" key={p.id}>
-                        <img
-                          className="prediction-number-avatar"
-                          src={p.users?.avatar_url || '/avatar.svg'}
-                          alt={p.users?.name || 'Avatar'}
-                        />
-                        <div className="prediction-number-person-copy">
-                          <span className="prediction-number-person-name">
-                            {p.users?.name || 'Người tham gia'}
-                          </span>
-                          {getChampionPrediction(p.user_id)?.team?.name && (
-                            <small className="prediction-champion-badge compact" title="Đội dự đoán vô địch">
-                              🏆 {getChampionPrediction(p.user_id)?.team?.name}
-                            </small>
-                          )}
+            <div className="prediction-share-area">
+              <div className="prediction-number-list" ref={predictionBoardRef}>
+                <div className="prediction-share-heading">FAM - TIMES · BẢNG DỰ ĐOÁN</div>
+                {groupedCurrent.map((group) => (
+                  <div className="prediction-number-row" key={group.number}>
+                    <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
+                    <div className="prediction-number-avatars">
+                      {group.predictions.map((p) => (
+                        <div className="prediction-number-person" key={p.id}>
+                          <img
+                            className="prediction-number-avatar"
+                            src={p.users?.avatar_url || '/avatar.svg'}
+                            alt={p.users?.name || 'Avatar'}
+                            crossOrigin="anonymous"
+                          />
+                          <div className="prediction-number-person-copy">
+                            <span className="prediction-number-person-name">
+                              {p.users?.name || 'Người tham gia'}
+                            </span>
+                            {getChampionPrediction(p.user_id)?.team?.name && (
+                              <small className="prediction-champion-badge compact" title="Đội dự đoán vô địch">
+                                🏆 {getChampionPrediction(p.user_id)?.team?.name}
+                              </small>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="prediction-number-count">{group.predictions.length} người</div>
                   </div>
-                  <div className="prediction-number-count">{group.predictions.length} người</div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <button
+                className="prediction-share-image-btn"
+                type="button"
+                disabled={sharingPredictionBoard || groupedCurrent.length === 0}
+                onClick={async () => {
+                  if (!predictionBoardRef.current || groupedCurrent.length === 0 || sharingPredictionBoard) return;
+                  setSharingPredictionBoard(true);
+                  try {
+                    const canvas = await html2canvas(predictionBoardRef.current, {
+                      backgroundColor: '#061a2b',
+                      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+                      useCORS: true,
+                      allowTaint: false,
+                      logging: false,
+                    });
+                    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+                    if (!blob) throw new Error('Không thể tạo ảnh.');
+                    const file = new File([blob], 'fam-times-bang-du-doan.png', { type: 'image/png' });
+
+                    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+                      await navigator.share({
+                        title: 'FAM - TIMES · Bảng dự đoán',
+                        text: active?.title ? 'Bảng dự đoán · ' + active.title : 'Bảng dự đoán FAM - TIMES',
+                        files: [file],
+                      });
+                    } else {
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = file.name;
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      URL.revokeObjectURL(url);
+                      setSubmitMessage('Đã tạo ảnh bảng dự đoán. Thiết bị/trình duyệt chưa hỗ trợ chia sẻ trực tiếp nên ảnh đã được tải xuống.');
+                    }
+                  } catch (error: any) {
+                    if (error?.name !== 'AbortError') {
+                      setSubmitMessage('Không thể tạo ảnh chia sẻ. Vui lòng thử lại.');
+                    }
+                  } finally {
+                    setSharingPredictionBoard(false);
+                  }
+                }}
+              >
+                <span aria-hidden="true">↗</span>
+                {sharingPredictionBoard ? 'Đang tạo ảnh...' : 'Chia sẻ hình ảnh'}
+              </button>
             </div>
           )}
           {active?.actual_result != null && (
