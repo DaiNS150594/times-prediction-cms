@@ -835,7 +835,6 @@ export default function Home() {
           ) : (
             <div className="prediction-share-area">
               <div className="prediction-number-list" ref={predictionBoardRef}>
-                <div className="prediction-share-heading">FAM - TIMES · BẢNG DỰ ĐOÁN</div>
                 {groupedCurrent.map((group) => (
                   <div className="prediction-number-row" key={group.number}>
                     <div className="prediction-number-label">{formatTwoDigits(group.number)}</div>
