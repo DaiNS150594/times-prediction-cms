@@ -156,17 +156,19 @@ export default function Home() {
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
   const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
 
+  // "Theo team" groups participants by the team they predicted to become champion,
+  // not by the team they are actually playing in.
   const groupedByTeam = teams
     .map((team) => ({
       team,
       predictions: current
-        .filter((prediction) => (team.team_members || []).some((member) => member.user_id === prediction.user_id))
+        .filter((prediction) => getChampionPrediction(prediction.user_id)?.team_id === team.id)
         .sort((a, b) => (a.users?.name || '').localeCompare(b.users?.name || '', 'vi')),
     }))
     .filter((group) => group.predictions.length > 0);
 
   const unassignedTeamPredictions = current
-    .filter((prediction) => !teams.some((team) => (team.team_members || []).some((member) => member.user_id === prediction.user_id)))
+    .filter((prediction) => !getChampionPrediction(prediction.user_id)?.team_id)
     .sort((a, b) => (a.users?.name || '').localeCompare(b.users?.name || '', 'vi'));
 
   useEffect(() => {
