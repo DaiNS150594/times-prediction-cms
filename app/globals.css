@@ -2585,3 +2585,45 @@ body:after{
     margin-top:10px;
   }
 }
+
+
+/* Admin manual prediction form — mobile responsive fix */
+@media(max-width:650px){
+  .admin-manual-prediction{
+    width:100%;
+    min-width:0;
+    overflow:hidden;
+  }
+
+  .admin-manual-controls{
+    width:100%;
+    min-width:0;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:10px;
+  }
+
+  .admin-manual-controls > .input,
+  .admin-manual-controls > select,
+  .admin-manual-controls > button{
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  .admin-manual-controls > select:first-child{
+    grid-column:1 / -1;
+  }
+
+  .admin-manual-controls.has-champion .admin-manual-champion{
+    grid-column:1 / -1;
+  }
+
+  .admin-manual-number{
+    grid-column:1;
+  }
+
+  .admin-manual-add{
+    grid-column:2;
+  }
+}
