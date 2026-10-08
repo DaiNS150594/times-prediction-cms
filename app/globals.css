@@ -1723,17 +1723,100 @@ body:after{
   line-height:1.2;
 }
 .tournament-bracket-quarterfinal .tournament-bracket-matches{
-  padding-top:78px;
-  padding-bottom:78px;
+  padding-top:24px;
+  padding-bottom:24px;
 }
 .tournament-bracket-semifinal .tournament-bracket-matches{
-  padding-top:180px;
-  padding-bottom:180px;
+  padding-top:96px;
+  padding-bottom:96px;
 }
 .tournament-bracket-final .tournament-bracket-matches{
-  padding-top:231px;
-  padding-bottom:231px;
+  padding-top:168px;
+  padding-bottom:168px;
 }
+/* Tournament match admin form */
+.tournament-bracket-admin{
+  margin-top:18px;
+  padding:18px;
+  border:1px solid rgba(171,207,232,.16);
+  border-radius:16px;
+  background:rgba(3,18,31,.30);
+}
+.tournament-bracket-admin > .tournament-form-title{
+  margin-bottom:5px;
+}
+.tournament-bracket-admin > .muted{
+  margin:0 0 14px;
+  line-height:1.5;
+}
+.tournament-match-form{
+  display:grid;
+  grid-template-columns:1.05fr .55fr 1fr 1fr 1fr auto;
+  align-items:end;
+  gap:10px;
+  padding:14px;
+  border:1px solid rgba(171,207,232,.14);
+  border-radius:14px;
+  background:rgba(7,29,46,.34);
+}
+.tournament-match-form .input{
+  width:100%;
+  min-width:0;
+  height:46px;
+}
+.tournament-match-form .tournament-form-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  white-space:nowrap;
+}
+.tournament-match-form .tournament-form-actions .btn{
+  min-height:46px;
+}
+.tournament-match-admin-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:14px;
+}
+.tournament-match-admin-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:11px 13px;
+  border:1px solid rgba(171,207,232,.14);
+  border-radius:12px;
+  background:rgba(7,29,46,.34);
+}
+.tournament-match-admin-row > div:first-child{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.tournament-match-admin-row b{
+  color:#fff;
+  font-size:13px;
+  line-height:1.3;
+}
+.tournament-match-admin-row > div:first-child > span{
+  color:#91a8b8;
+  font-size:12px;
+  line-height:1.4;
+}
+.tournament-match-admin-row .tournament-admin-card-actions{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.tournament-match-admin-row .btn.compact{
+  min-height:34px;
+  padding:7px 11px;
+}
+
 @media(max-width:650px){
   .tournament-bracket-panel{
     width:100%;
@@ -1746,11 +1829,21 @@ body:after{
   .tournament-bracket-matches{
     min-height:360px;
   }
-  .tournament-bracket-quarterfinal .tournament-bracket-matches{padding-top:20px;padding-bottom:20px}
-  .tournament-bracket-semifinal .tournament-bracket-matches{padding-top:70px;padding-bottom:70px}
-  .tournament-bracket-final .tournament-bracket-matches{padding-top:120px;padding-bottom:120px}
+  .tournament-bracket-quarterfinal .tournament-bracket-matches{padding-top:12px;padding-bottom:12px}
+  .tournament-bracket-semifinal .tournament-bracket-matches{padding-top:48px;padding-bottom:48px}
+  .tournament-bracket-final .tournament-bracket-matches{padding-top:84px;padding-bottom:84px}
+  .tournament-bracket-admin{
+    padding:14px;
+    margin-top:14px;
+  }
   .tournament-match-form{
     grid-template-columns:1fr 1fr;
+    align-items:stretch;
+    gap:8px;
+    padding:10px;
+  }
+  .tournament-match-form .input{
+    height:44px;
   }
   .tournament-match-form .tournament-form-actions{
     grid-column:1 / -1;
