@@ -2568,3 +2568,20 @@ body:after{
   .tournament-settings-image-grid{grid-template-columns:1fr}
   .tournament-info-image-gallery{grid-template-columns:1fr;gap:10px}
 }
+
+
+.admin-prediction-share-btn{
+  display:inline-flex;
+  margin:10px 0 0;
+  min-height:46px;
+}
+.admin-prediction-share-capture{
+  width:100%;
+  overflow:hidden;
+}
+@media(max-width:650px){
+  .admin-prediction-share-btn{
+    width:100%;
+    margin-top:10px;
+  }
+}
