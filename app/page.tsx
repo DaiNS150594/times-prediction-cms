@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentMatch, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentInfoImage, TournamentMatch, TournamentPrediction, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Home() {
   const [tab, setTab] = useState('current');
@@ -14,6 +14,7 @@ export default function Home() {
   const [tournamentMatches, setTournamentMatches] = useState<TournamentMatch[]>([]);
   const [tournamentPredictions, setTournamentPredictions] = useState<TournamentPrediction[]>([]);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
+  const [tournamentInfoImages, setTournamentInfoImages] = useState<TournamentInfoImage[]>([]);
   const [dismissedTournamentWinnerId, setDismissedTournamentWinnerId] = useState<string | null>(null);
   const [landingMusicOn, setLandingMusicOn] = useState(false);
   const [landingTrackIndex, setLandingTrackIndex] = useState(0);
@@ -27,13 +28,14 @@ export default function Home() {
   const [submitChampionTeamId, setSubmitChampionTeamId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [infoImageOpen, setInfoImageOpen] = useState(false);
+  const [selectedInfoImage, setSelectedInfoImage] = useState<TournamentInfoImage | null>(null);
   const [dismissedWinnerEventId, setDismissedWinnerEventId] = useState<string | null>(null);
   const landingBannerRef = useRef<HTMLDivElement | null>(null);
   const predictionBoardRef = useRef<HTMLDivElement | null>(null);
   const [sharingPredictionBoard, setSharingPredictionBoard] = useState(false);
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: tm }, { data: ts }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: tp }, { data: tm }, { data: ts }, { data: ti }] = await Promise.all([
       supabase.from('users').select('id,name,nickname,avatar_url,created_at').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(id,name,nickname,avatar_url,created_at)'),
@@ -386,12 +388,12 @@ export default function Home() {
         </div>
       )}
 
-      {infoImageOpen && tournamentSettings?.info_image_url && (
+      {infoImageOpen && selectedInfoImage && (
         <div className="tournament-info-lightbox" role="dialog" aria-modal="true" aria-label="Thông tin giải đấu">
           <button type="button" className="tournament-info-lightbox-backdrop" aria-label="Đóng ảnh" onClick={() => setInfoImageOpen(false)} />
           <div className="tournament-info-lightbox-content">
             <button type="button" className="winner-popup-close" aria-label="Đóng ảnh" onClick={() => setInfoImageOpen(false)}>×</button>
-            <img src={tournamentSettings.info_image_url} alt="Thông tin giải đấu phóng to" />
+            <img src={selectedInfoImage.image_url} alt="Thông tin giải đấu phóng to" />
           </div>
         </div>
       )}
@@ -560,7 +562,7 @@ export default function Home() {
             </div>
           </div>
 
-          {tournamentSettings?.info_image_url && (
+          {tournamentInfoImages.length > 0 && (
             <section className="panel tournament-info-panel">
               <div className="landing-section-heading">
                 <div>
@@ -568,14 +570,22 @@ export default function Home() {
                   <h2 className="section-title">Thông tin giải đấu</h2>
                 </div>
               </div>
-              <button
-                type="button"
-                className="tournament-info-image-wrap tournament-info-image-button"
-                onClick={() => setInfoImageOpen(true)}
-                aria-label="Phóng to thông tin giải đấu"
-              >
-                <img src={tournamentSettings.info_image_url} alt="Thông tin giải đấu" />
-              </button>
+              <div className="tournament-info-image-gallery">
+                {tournamentInfoImages.map((image, index) => (
+                  <button
+                    type="button"
+                    className="tournament-info-image-wrap tournament-info-image-button"
+                    key={image.id}
+                    onClick={() => {
+                      setSelectedInfoImage(image);
+                      setInfoImageOpen(true);
+                    }}
+                    aria-label={'Phóng to thông tin giải đấu ' + (index + 1)}
+                  >
+                    <img src={image.image_url} alt={'Thông tin giải đấu ' + (index + 1)} />
+                  </button>
+                ))}
+              </div>
             </section>
           )}
 
