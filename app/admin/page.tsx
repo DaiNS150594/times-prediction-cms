@@ -653,11 +653,6 @@ export default function Admin() {
       return;
     }
 
-    if (tournamentOpen && !manualChampionTeamId) {
-      alert('Hãy chọn đội dự đoán vô địch.');
-      return;
-    }
-
     const { error } = await supabase.from('predictions').insert({
       event_id: active.id,
       user_id: manualPredictionUserId,
@@ -1221,9 +1216,8 @@ export default function Admin() {
                       className="input admin-manual-champion"
                       value={manualChampionTeamId}
                       onChange={(e) => setManualChampionTeamId(e.target.value)}
-                      required
                     >
-                      <option value="">Chọn đội vô địch</option>
+                      <option value="">Không chọn đội vô địch</option>
                       {remainingTournamentTeams.map((team) => (
                         <option value={team.id} key={team.id}>{team.name}</option>
                       ))}
