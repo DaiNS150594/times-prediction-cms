@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, Prediction, TournamentMatch, TournamentSettings, TournamentTeam, User } from '@/types';
+import type { Event, Prediction, TournamentInfoImage, TournamentMatch, TournamentSettings, TournamentTeam, User } from '@/types';
 
 export default function Admin() {
   const [session, setSession] = useState<any>(undefined);
@@ -24,6 +24,7 @@ export default function Admin() {
   const [tournamentTitle, setTournamentTitle] = useState('GIẢI ĐẤU');
   const [tournamentSubtitle, setTournamentSubtitle] = useState('Chơi game bằng thực lực!');
   const [tournamentInfoImageFile, setTournamentInfoImageFile] = useState<File | null>(null);
+  const [tournamentInfoImages, setTournamentInfoImages] = useState<TournamentInfoImage[]>([]);
   const [tournamentInfoImagePreview, setTournamentInfoImagePreview] = useState('');
   const [savingTournamentSettings, setSavingTournamentSettings] = useState(false);
   const [teamName, setTeamName] = useState('');
@@ -56,7 +57,7 @@ export default function Admin() {
   const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
-    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }, { data: tm }] = await Promise.all([
+    const [{ data: u }, { data: e }, { data: p }, { data: t }, { data: ts }, { data: tm }, { data: ti }] = await Promise.all([
       supabase.from('users').select('*').order('name'),
       supabase.from('events').select('*').order('created_at', { ascending: false }),
       supabase.from('predictions').select('*,users(*)'),
@@ -225,8 +226,22 @@ export default function Admin() {
 
     setSavingTournamentSettings(true);
 
-    let infoImageUrl = tournamentSettings?.info_image_url || null;
-    let infoImagePath = tournamentSettings?.info_image_path || null;
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('tournament_settings')
+      .upsert({
+        id: 1,
+        title: nextTitle,
+        subtitle: nextSubtitle,
+        updated_at: new Date().toISOString(),
+      })
+      .select('*')
+      .single();
+
+    if (settingsError) {
+      alert('Không thể lưu cấu hình giải đấu: ' + settingsError.message);
+      setSavingTournamentSettings(false);
+      return;
+    }
 
     if (tournamentInfoImageFile) {
       if (!tournamentInfoImageFile.type.startsWith('image/')) {
@@ -261,79 +276,55 @@ export default function Admin() {
         .from('tournament-assets')
         .getPublicUrl(nextPath);
 
-      infoImageUrl = publicUrlData.publicUrl;
-      infoImagePath = nextPath;
+      const { error: imageInsertError } = await supabase
+        .from('tournament_info_images')
+        .insert({
+          image_url: publicUrlData.publicUrl,
+          image_path: nextPath,
+        });
 
-      if (infoImagePath !== tournamentSettings?.info_image_path && tournamentSettings?.info_image_path) {
-        await supabase.storage.from('tournament-assets').remove([tournamentSettings.info_image_path]);
+      if (imageInsertError) {
+        await supabase.storage.from('tournament-assets').remove([nextPath]);
+        alert('Không thể lưu ảnh: ' + imageInsertError.message);
+        setSavingTournamentSettings(false);
+        return;
       }
-    }
 
-    const { data, error } = await supabase
-      .from('tournament_settings')
-      .upsert({
-        id: 1,
-        title: nextTitle,
-        subtitle: nextSubtitle,
-        info_image_url: infoImageUrl,
-        info_image_path: infoImagePath,
-        updated_at: new Date().toISOString(),
-      })
-      .select('*')
-      .single();
-
-    if (error) {
-      alert('Không thể lưu cấu hình giải đấu: ' + error.message);
-      setSavingTournamentSettings(false);
-      return;
-    }
-
-    setTournamentSettings(data as TournamentSettings);
-    setTournamentTitle(nextTitle);
-    setTournamentSubtitle(nextSubtitle);
-    setTournamentInfoImagePreview(infoImageUrl || '');
-    setTournamentInfoImageFile(null);
-    setSavingTournamentSettings(false);
-    alert('Đã lưu thông tin giải đấu.');
-  }
-
-  async function deleteTournamentInfoImage() {
-    if (!tournamentSettings?.info_image_path) {
       setTournamentInfoImageFile(null);
       setTournamentInfoImagePreview('');
-      return;
     }
 
-    if (!confirm('Xóa hình ảnh thông tin giải đấu?')) return;
+    setTournamentSettings(settingsData as TournamentSettings);
+    setTournamentTitle(nextTitle);
+    setTournamentSubtitle(nextSubtitle);
+    setSavingTournamentSettings(false);
+    await load();
+    alert(tournamentInfoImageFile ? 'Đã lưu thông tin và thêm hình ảnh.' : 'Đã lưu thông tin giải đấu.');
+  }
+
+  async function deleteTournamentInfoImageById(image: TournamentInfoImage) {
+    if (!confirm('Xóa hình ảnh này khỏi danh sách?')) return;
 
     const { error: storageError } = await supabase.storage
       .from('tournament-assets')
-      .remove([tournamentSettings.info_image_path]);
+      .remove([image.image_path]);
 
     if (storageError) {
-      alert('Không thể xóa ảnh: ' + storageError.message);
+      alert('Không thể xóa file ảnh: ' + storageError.message);
       return;
     }
 
-    const { data, error } = await supabase
-      .from('tournament_settings')
-      .update({
-        info_image_url: null,
-        info_image_path: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', 1)
-      .select('*')
-      .single();
+    const { error } = await supabase
+      .from('tournament_info_images')
+      .delete()
+      .eq('id', image.id);
 
     if (error) {
-      alert('Không thể cập nhật cấu hình ảnh: ' + error.message);
+      alert('Không thể xóa ảnh: ' + error.message);
       return;
     }
 
-    setTournamentSettings(data as TournamentSettings);
-    setTournamentInfoImageFile(null);
-    setTournamentInfoImagePreview('');
+    setTournamentInfoImages((current) => current.filter((item) => item.id !== image.id));
   }
 
   function resetTeamForm() {
@@ -923,12 +914,28 @@ export default function Admin() {
 
             <div className="tournament-settings-image">
               <label className="tournament-settings-label">Hình ảnh thông tin giải đấu</label>
-              {tournamentInfoImagePreview ? (
-                <div className="tournament-settings-image-preview">
-                  <img src={tournamentInfoImagePreview} alt="Thông tin giải đấu" />
+              {tournamentInfoImages.length > 0 ? (
+                <div className="tournament-settings-image-grid">
+                  {tournamentInfoImages.map((image, index) => (
+                    <div className="tournament-settings-image-card" key={image.id}>
+                      <img src={image.image_url} alt={'Thông tin giải đấu ' + (index + 1)} />
+                      <div className="tournament-settings-image-card-actions">
+                        <span>Ảnh {index + 1}</span>
+                        <button className="btn danger compact" type="button" onClick={() => deleteTournamentInfoImageById(image)}>
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="tournament-settings-image-empty">Chưa có hình ảnh thông tin giải đấu.</div>
+              )}
+              {tournamentInfoImagePreview && (
+                <div className="tournament-settings-image-preview pending">
+                  <img src={tournamentInfoImagePreview} alt="Ảnh chuẩn bị upload" />
+                  <span>Ảnh mới sẽ được thêm vào danh sách, không thay thế ảnh cũ.</span>
+                </div>
               )}
               <input
                 className="input"
@@ -944,11 +951,6 @@ export default function Admin() {
                 <button className="btn" type="submit" disabled={savingTournamentSettings}>
                   {savingTournamentSettings ? 'Đang lưu...' : 'Lưu thông tin giải đấu'}
                 </button>
-                {tournamentSettings?.info_image_url && (
-                  <button className="btn danger" type="button" onClick={deleteTournamentInfoImage}>
-                    Xóa hình ảnh
-                  </button>
-                )}
               </div>
             </div>
           </form>
