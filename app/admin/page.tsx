@@ -40,7 +40,7 @@ export default function Admin() {
   const [eventLink, setEventLink] = useState('');
   const [eventSubtitle, setEventSubtitle] = useState('');
   const [resultNumber, setResultNumber] = useState('');
-  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('name');
+  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('number');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editUserName, setEditUserName] = useState('');
