@@ -64,6 +64,7 @@ export default function Admin() {
       supabase.from('tournament_teams').select('*,team_members(*,users(*))').order('created_at'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*),winner:tournament_teams!tournament_matches_winner_team_id_fkey(*)').order('round').order('match_order'),
+       supabase.from('tournament_info_images').select('*').order('created_at'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
