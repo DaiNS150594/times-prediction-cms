@@ -43,6 +43,7 @@ export default function Home() {
       supabase.from('tournament_predictions').select('*,users(id,name,nickname,avatar_url,created_at),team:tournament_teams(id,name,status,created_at)').order('created_at'),
       supabase.from('tournament_matches').select('*,team1:tournament_teams!tournament_matches_team1_id_fkey(*),team2:tournament_teams!tournament_matches_team2_id_fkey(*),winner:tournament_teams!tournament_matches_winner_team_id_fkey(*)').order('round').order('match_order'),
       supabase.from('tournament_settings').select('*').eq('id', 1).maybeSingle(),
+       supabase.from('tournament_info_images').select('*').order('created_at'),
     ]);
     setUsers(u || []);
     setEvents(e || []);
@@ -50,6 +51,7 @@ export default function Home() {
     setTeams((t as any) || []);
     setTournamentPredictions((tp as TournamentPrediction[]) || []);
     setTournamentMatches((tm as TournamentMatch[]) || []);
+     setTournamentInfoImages((ti as TournamentInfoImage[]) || []);
     setTournamentSettings((ts as TournamentSettings | null) || null);
   }
 
@@ -76,6 +78,7 @@ export default function Home() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_teams' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_settings' }, load)
+       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_info_images' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_predictions' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_matches' }, load)
       .subscribe();
