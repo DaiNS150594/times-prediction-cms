@@ -225,6 +225,7 @@ export default function Admin() {
     }
 
     setSavingTournamentSettings(true);
+    const hasNewImage = !!tournamentInfoImageFile;
 
     const { data: settingsData, error: settingsError } = await supabase
       .from('tournament_settings')
@@ -299,7 +300,7 @@ export default function Admin() {
     setTournamentSubtitle(nextSubtitle);
     setSavingTournamentSettings(false);
     await load();
-    alert(tournamentInfoImageFile ? 'Đã lưu thông tin và thêm hình ảnh.' : 'Đã lưu thông tin giải đấu.');
+    alert(hasNewImage ? 'Đã lưu thông tin và thêm hình ảnh.' : 'Đã lưu thông tin giải đấu.');
   }
 
   async function deleteTournamentInfoImageById(image: TournamentInfoImage) {
