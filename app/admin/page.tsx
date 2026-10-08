@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, TournamentInfoImage, TournamentMatch, TournamentSettings, TournamentTeam, User } from '@/types';
 
@@ -1372,6 +1371,7 @@ export default function Admin() {
                   if (!adminPredictionBoardRef.current || activePreds.length === 0 || sharingPredictionBoard) return;
                   setSharingPredictionBoard(true);
                   try {
+                    const { default: html2canvas } = await import('html2canvas');
                     const canvas = await html2canvas(adminPredictionBoardRef.current, {
                       backgroundColor: '#061a2b',
                       scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
