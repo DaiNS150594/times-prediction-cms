@@ -73,6 +73,7 @@ export default function Admin() {
     setPreds((p as any) || []);
     setTeams((t as any) || []);
     setTournamentMatches((tm as TournamentMatch[]) || []);
+    setTournamentInfoImages((ti as TournamentInfoImage[]) || []);
     const nextTournamentSettings = (ts as TournamentSettings | null);
     setTournamentSettings(nextTournamentSettings);
     setTournamentTitle(nextTournamentSettings?.title || 'GIẢI ĐẤU');
