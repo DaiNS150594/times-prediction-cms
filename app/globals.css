@@ -2508,3 +2508,63 @@ body:after{
   .prediction-team-person-copy b{font-size:11px}
   .prediction-team-person-copy span{font-size:11px}
 }
+
+
+/* Tournament info image gallery */
+.tournament-settings-image-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+.tournament-settings-image-card{
+  overflow:hidden;
+  border:1px solid rgba(171,207,232,.18);
+  border-radius:14px;
+  background:rgba(4,22,36,.55);
+}
+.tournament-settings-image-card img{
+  display:block;
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:contain;
+  background:#061a2b;
+}
+.tournament-settings-image-card-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 10px;
+  color:#9fb2c0;
+  font-size:12px;
+}
+.tournament-settings-image-card-actions .btn{
+  min-height:32px;
+  padding:6px 10px;
+}
+.tournament-settings-image-preview.pending{
+  position:relative;
+  margin-top:10px;
+}
+.tournament-settings-image-preview.pending span{
+  display:block;
+  margin-top:6px;
+  color:#ffb27e;
+  font-size:12px;
+}
+.tournament-info-image-gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.tournament-info-image-gallery .tournament-info-image-wrap{
+  width:100%;
+}
+.tournament-info-image-gallery .tournament-info-image-wrap img{
+  width:100%;
+  display:block;
+}
+@media(max-width:650px){
+  .tournament-settings-image-grid{grid-template-columns:1fr}
+  .tournament-info-image-gallery{grid-template-columns:1fr;gap:10px}
+}
