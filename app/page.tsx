@@ -18,7 +18,7 @@ export default function Home() {
   const [landingMusicOn, setLandingMusicOn] = useState(false);
   const [landingTrackIndex, setLandingTrackIndex] = useState(0);
   const landingAudioRef = useRef<HTMLAudioElement | null>(null);
-  const [predictionSort, setPredictionSort] = useState<'name' | 'number'>('number');
+  const [predictionSort, setPredictionSort] = useState<'name' | 'number' | 'team'>('number');
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<string[]>([]);
   const [submitUserId, setSubmitUserId] = useState('');
   const [submitPin, setSubmitPin] = useState('');
@@ -155,6 +155,25 @@ export default function Home() {
   const availableUsers = users.filter((u) => !submittedUserIds.has(u.id));
   const remainingTournamentTeams = teams.filter((team) => team.status !== 'stopped');
   const tournamentOpen = teams.length > 1 && remainingTournamentTeams.length > 1;
+
+  const groupedByTeam = teams
+    .map((team) => ({
+      team,
+      predictions: current
+        .filter((prediction) => (team.team_members || []).some((member) => member.user_id === prediction.user_id))
+        .sort((a, b) => (a.users?.name || '').localeCompare(b.users?.name || '', 'vi')),
+    }))
+    .filter((group) => group.predictions.length > 0);
+
+  const unassignedTeamPredictions = current
+    .filter((prediction) => !teams.some((team) => (team.team_members || []).some((member) => member.user_id === prediction.user_id)))
+    .sort((a, b) => (a.users?.name || '').localeCompare(b.users?.name || '', 'vi'));
+
+  useEffect(() => {
+    if (!tournamentOpen && predictionSort === 'team') {
+      setPredictionSort('number');
+    }
+  }, [tournamentOpen, predictionSort]);
 
   useEffect(() => {
     if (tab !== 'landing' || tournamentMatches.length === 0) return;
@@ -708,7 +727,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <form className="self-predict-form" onSubmit={submitPrediction}>
+              <form className={"self-predict-form" + (tournamentOpen ? " has-tournament" : "")} onSubmit={submitPrediction}>
                 <select
                   className="input"
                   value={submitUserId}
@@ -788,27 +807,66 @@ export default function Home() {
               <div className="sort-title">Sắp xếp bảng dự đoán</div>
               <div className="sort-subtitle">{current.length} người tham gia</div>
             </div>
-            <div className="sort-toggle" role="group" aria-label="Sắp xếp bảng dự đoán">
-              <button
-                className={'sort-btn ' + (predictionSort === 'name' ? 'active' : '')}
-                type="button"
-                onClick={() => setPredictionSort('name')}
-              >
+            <div className={'sort-toggle ' + (tournamentOpen ? 'has-team-sort' : '')} role="group" aria-label="Sắp xếp bảng dự đoán">
+              <button className={'sort-btn ' + (predictionSort === 'name' ? 'active' : '')} type="button" onClick={() => setPredictionSort('name')}>
                 <span className="sort-icon">A–Z</span>
                 <span>Theo tên</span>
               </button>
-              <button
-                className={'sort-btn ' + (predictionSort === 'number' ? 'active' : '')}
-                type="button"
-                onClick={() => setPredictionSort('number')}
-              >
+              <button className={'sort-btn ' + (predictionSort === 'number' ? 'active' : '')} type="button" onClick={() => setPredictionSort('number')}>
                 <span className="sort-icon">1–9</span>
                 <span>Theo số dự đoán</span>
               </button>
+              {tournamentOpen && (
+                <button className={'sort-btn ' + (predictionSort === 'team' ? 'active' : '')} type="button" onClick={() => setPredictionSort('team')}>
+                  <span className="sort-icon">👥</span>
+                  <span>Theo team</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {predictionSort === 'name' ? (
+          {predictionSort === 'team' && tournamentOpen ? (
+            <div className="prediction-team-list">
+              {groupedByTeam.map((group) => (
+                <div className="prediction-team-group" key={group.team.id}>
+                  <div className="prediction-team-group-head">
+                    <div className="prediction-team-group-title"><span className="prediction-team-group-icon">👥</span><b>{group.team.name}</b></div>
+                    <span>{group.predictions.length} người</span>
+                  </div>
+                  <div className="prediction-team-group-members">
+                    {group.predictions.map((p) => (
+                      <div className="prediction-team-person" key={p.id}>
+                        <img src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} crossOrigin="anonymous" />
+                        <div className="prediction-team-person-copy">
+                          <b>{p.users?.name || 'Người tham gia'}</b>
+                          <span>{formatTwoDigits(p.prediction)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {unassignedTeamPredictions.length > 0 && (
+                <div className="prediction-team-group unassigned">
+                  <div className="prediction-team-group-head">
+                    <div className="prediction-team-group-title"><span className="prediction-team-group-icon">•</span><b>Chưa vào team</b></div>
+                    <span>{unassignedTeamPredictions.length} người</span>
+                  </div>
+                  <div className="prediction-team-group-members">
+                    {unassignedTeamPredictions.map((p) => (
+                      <div className="prediction-team-person" key={p.id}>
+                        <img src={p.users?.avatar_url || '/avatar.svg'} alt={p.users?.name || 'Avatar'} crossOrigin="anonymous" />
+                        <div className="prediction-team-person-copy">
+                          <b>{p.users?.name || 'Người tham gia'}</b>
+                          <span>{formatTwoDigits(p.prediction)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : predictionSort === 'name' ? (
             <div className="prediction-name-list">
               {sortedCurrent.map((p) => (
                 <div className="prediction-name-row" key={p.id}>
