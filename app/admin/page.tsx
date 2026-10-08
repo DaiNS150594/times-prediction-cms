@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, Prediction, TournamentInfoImage, TournamentMatch, TournamentSettings, TournamentTeam, User } from '@/types';
 
@@ -54,8 +54,6 @@ export default function Admin() {
   const [editingEventTitle, setEditingEventTitle] = useState(false);
   const [eventTitleDraft, setEventTitleDraft] = useState('');
   const [editingEventDate, setEditingEventDate] = useState(false);
-  const [sharingPredictionBoard, setSharingPredictionBoard] = useState(false);
-  const adminPredictionBoardRef = useRef<HTMLDivElement | null>(null);
   const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
@@ -1301,7 +1299,6 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="admin-prediction-share-capture" ref={adminPredictionBoardRef}>
               {predictionSort === 'name' ? (
                 <div className="prediction-name-list admin-prediction-name-list">
                   {sortedActivePreds.map((p) => (
@@ -1361,56 +1358,6 @@ export default function Admin() {
                   ))}
                 </div>
               )}
-              </div>
-
-              <button
-                className="prediction-share-image-btn admin-prediction-share-btn"
-                type="button"
-                disabled={sharingPredictionBoard || activePreds.length === 0}
-                onClick={async () => {
-                  if (!adminPredictionBoardRef.current || activePreds.length === 0 || sharingPredictionBoard) return;
-                  setSharingPredictionBoard(true);
-                  try {
-                    const { default: html2canvas } = await import('html2canvas');
-                    const canvas = await html2canvas(adminPredictionBoardRef.current, {
-                      backgroundColor: '#061a2b',
-                      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
-                      useCORS: true,
-                      allowTaint: false,
-                      logging: false,
-                    });
-                    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'fam-times-admin-bang-du-doan.png', 'image/png'));
-                    if (!blob) throw new Error('Không thể tạo ảnh.');
-                    const file = new File([blob], 'fam-times-admin-bang-du-doan.png', { type: 'image/png' });
-
-                    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-                      await navigator.share({
-                        title: 'FAM - TIMES · Bảng dự đoán',
-                        text: active?.title ? 'Bảng dự đoán · ' + active.title : 'Bảng dự đoán FAM - TIMES',
-                        files: [file],
-                      });
-                    } else {
-                      const url = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = file.name;
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                      URL.revokeObjectURL(url);
-                    }
-                  } catch (error: any) {
-                    if (error?.name !== 'AbortError') {
-                      alert('Không thể tạo ảnh chia sẻ. Vui lòng thử lại.');
-                    }
-                  } finally {
-                    setSharingPredictionBoard(false);
-                  }
-                }}
-              >
-                <span aria-hidden="true">↗</span>
-                {sharingPredictionBoard ? 'Đang tạo ảnh...' : 'Chia sẻ hình ảnh'}
-              </button>
 
               {editingPredictionId && (() => {
                 const editingPrediction = activePreds.find((p) => p.id === editingPredictionId);
