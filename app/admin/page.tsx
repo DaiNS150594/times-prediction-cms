@@ -680,6 +680,18 @@ export default function Admin() {
         alert('Không thể lưu đội vô địch: ' + championError.message);
         return;
       }
+    } else {
+      // No champion team selected: remove any old champion choice so it is
+      // not displayed beside this user's prediction.
+      const { error: clearChampionError } = await supabase
+        .from('tournament_predictions')
+        .delete()
+        .eq('user_id', manualPredictionUserId);
+
+      if (clearChampionError) {
+        alert('Không thể xóa lựa chọn đội vô địch cũ: ' + clearChampionError.message);
+        return;
+      }
     }
 
     setManualPredictionUserId('');
