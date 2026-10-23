@@ -2699,3 +2699,11 @@ body:after{
 @media(max-width:650px){
   .admin-user-list-share-btn{width:100%}
 }
+
+
+.admin-user-list-image-sheet th:nth-child(2){width:130px}
+.admin-user-list-image-sheet th:nth-child(3){width:34%}
+.admin-user-list-image-sheet th:nth-child(4){width:auto}
+.admin-user-list-image-sheet .member-image-role-owner td{background:#f3b5b5}
+.admin-user-list-image-sheet .member-image-role-deputy td{background:#b9dcf7}
+.admin-user-list-image-sheet .member-image-role-member td{background:#d8edcf}
