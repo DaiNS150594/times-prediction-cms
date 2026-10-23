@@ -2633,3 +2633,69 @@ body:after{
     grid-column:2;
   }
 }
+
+
+/* Exportable member list image styled like a spreadsheet */
+.admin-user-list-share-btn{
+  display:inline-flex;
+  margin:0 0 16px;
+}
+.admin-user-list-image-capture{
+  position:fixed;
+  left:-12000px;
+  top:0;
+  width:900px;
+  z-index:-1;
+  pointer-events:none;
+}
+.admin-user-list-image-sheet{
+  width:900px;
+  padding:8px 10px 12px;
+  box-sizing:border-box;
+  background:#fff;
+  color:#111;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.admin-user-list-image-title{
+  margin-bottom:2px;
+  text-align:center;
+  font-size:20px;
+  line-height:1.25;
+  font-weight:800;
+  color:#111;
+}
+.admin-user-list-image-sheet table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:15px;
+  color:#111;
+}
+.admin-user-list-image-sheet th,
+.admin-user-list-image-sheet td{
+  height:25px;
+  padding:2px 7px;
+  border:1px solid #333;
+  text-align:left;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.admin-user-list-image-sheet th{
+  background:#f4f4f4;
+  text-align:center;
+  font-weight:800;
+}
+.admin-user-list-image-sheet th:first-child,
+.admin-user-list-image-sheet td:first-child{
+  width:48px;
+  text-align:center;
+}
+.admin-user-list-image-sheet th:nth-child(2){width:42%}
+.admin-user-list-image-sheet th:nth-child(3){width:auto}
+.admin-user-list-image-sheet .member-image-row-0 td{background:#f7c3c3}
+.admin-user-list-image-sheet .member-image-row-1 td{background:#d7eaf8}
+.admin-user-list-image-sheet .member-image-row-2 td{background:#e0efd9}
+@media(max-width:650px){
+  .admin-user-list-share-btn{width:100%}
+}
