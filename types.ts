@@ -1,4 +1,4 @@
-export type User={id:string;name:string;nickname:string|null;avatar_url:string|null;pin_code?:string|null;created_at:string};
+export type User={id:string;name:string;nickname:string|null;avatar_url:string|null;pin_code?:string|null;role?:'Chủ fam'|'Phó fam'|'Thành viên';created_at:string};
 export type Event={id:string;title:string;event_date:string|null;actual_result:number|null;status:'active'|'closed';event_link:string|null;subtitle:string|null;created_at:string};
 export type Prediction={id:string;event_id:string;user_id:string;prediction:number;users?:User};
 
