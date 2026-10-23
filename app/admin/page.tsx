@@ -35,6 +35,7 @@ export default function Admin() {
   const [nick, setNick] = useState('');
   const [avatar, setAvatar] = useState('');
   const [pin, setPin] = useState('');
+  const [role, setRole] = useState<'Chủ fam' | 'Phó fam' | 'Thành viên'>('Thành viên');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [eventLink, setEventLink] = useState('');
@@ -47,6 +48,7 @@ export default function Admin() {
   const [editUserNick, setEditUserNick] = useState('');
   const [editUserAvatar, setEditUserAvatar] = useState('');
   const [editUserPin, setEditUserPin] = useState('');
+  const [editUserRole, setEditUserRole] = useState<'Chủ fam' | 'Phó fam' | 'Thành viên'>('Thành viên');
   const [manualPredictionUserId, setManualPredictionUserId] = useState('');
   const [manualPredictionNumber, setManualPredictionNumber] = useState('');
   const [manualChampionTeamId, setManualChampionTeamId] = useState('');
@@ -506,6 +508,7 @@ export default function Admin() {
       nickname: nick.trim() || null,
       avatar_url: avatar.trim() || null,
       pin_code: pin,
+      role,
     });
 
     if (error) {
@@ -517,6 +520,7 @@ export default function Admin() {
     setNick('');
     setAvatar('');
     setPin('');
+    setRole('Thành viên');
     load();
   }
 
@@ -526,6 +530,7 @@ export default function Admin() {
     setEditUserNick(user.nickname || '');
     setEditUserAvatar(user.avatar_url || '');
     setEditUserPin(user.pin_code || '');
+    setEditUserRole(user.role || 'Thành viên');
   }
 
   function cancelEditUser() {
@@ -534,6 +539,7 @@ export default function Admin() {
     setEditUserNick('');
     setEditUserAvatar('');
     setEditUserPin('');
+    setEditUserRole('Thành viên');
   }
 
   async function updateUser(id: string) {
@@ -554,6 +560,7 @@ export default function Admin() {
         nickname: editUserNick.trim() || null,
         avatar_url: editUserAvatar.trim() || null,
         pin_code: editUserPin,
+        role: editUserRole,
       })
       .eq('id', id);
 
@@ -1514,12 +1521,16 @@ export default function Admin() {
               <div className="admin-user-list-image-title">DANH SÁCH MEMBER TIMES</div>
               <table>
                 <thead>
-                  <tr><th>STT</th><th>Zalo</th><th>Ingame</th></tr>
+                  <tr><th>STT</th><th>Chức vụ</th><th>Zalo</th><th>Ingame</th></tr>
                 </thead>
                 <tbody>
-                  {users.map((u, index) => (
-                    <tr key={u.id} className={'member-image-row member-image-row-' + (Math.floor(index / 5) % 3)}>
+                  {[...users].sort((a, b) => {
+                    const roleOrder = { 'Chủ fam': 0, 'Phó fam': 1, 'Thành viên': 2 };
+                    return roleOrder[a.role || 'Thành viên'] - roleOrder[b.role || 'Thành viên'] || a.name.localeCompare(b.name, 'vi');
+                  }).map((u, index) => (
+                    <tr key={u.id} className={'member-image-row member-image-role-' + (u.role === 'Chủ fam' ? 'owner' : u.role === 'Phó fam' ? 'deputy' : 'member')}>
                       <td>{index + 1}</td>
+                      <td>{u.role || 'Thành viên'}</td>
                       <td>{u.name}</td>
                       <td>{u.nickname || ''}</td>
                     </tr>
@@ -1532,6 +1543,11 @@ export default function Admin() {
             <input className="input" required placeholder="Tên" value={name} onChange={(e) => setName(e.target.value)} />
             <input className="input" placeholder="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} />
             <input className="input" placeholder="URL avatar" value={avatar} onChange={(e) => setAvatar(e.target.value)} />
+            <select className="input" value={role} onChange={(e) => setRole(e.target.value as 'Chủ fam' | 'Phó fam' | 'Thành viên')}>
+              <option value="Chủ fam">Chủ fam</option>
+              <option value="Phó fam">Phó fam</option>
+              <option value="Thành viên">Thành viên</option>
+            </select>
             <input
               className="input pin-admin-input"
               type="text"
@@ -1589,6 +1605,11 @@ export default function Admin() {
                           value={editUserAvatar}
                           onChange={(e) => setEditUserAvatar(e.target.value)}
                         />
+                        <select className="input" value={editUserRole} onChange={(e) => setEditUserRole(e.target.value as 'Chủ fam' | 'Phó fam' | 'Thành viên')}>
+                          <option value="Chủ fam">Chủ fam</option>
+                          <option value="Phó fam">Phó fam</option>
+                          <option value="Thành viên">Thành viên</option>
+                        </select>
                         <input
                           className="input pin-admin-input"
                           type="text"
