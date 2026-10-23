@@ -57,6 +57,8 @@ export default function Admin() {
   const [editingEventDate, setEditingEventDate] = useState(false);
   const [sharingPredictionBoard, setSharingPredictionBoard] = useState(false);
   const adminPredictionBoardRef = useRef<HTMLDivElement | null>(null);
+  const adminUserListImageRef = useRef<HTMLDivElement | null>(null);
+  const [sharingUserListImage, setSharingUserListImage] = useState(false);
   const [eventDateDraft, setEventDateDraft] = useState('');
 
   async function load() {
@@ -1463,6 +1465,69 @@ export default function Admin() {
             <span>Danh sách người tham gia</span>
             <span className="admin-user-count">Tổng: {users.length} thành viên</span>
           </h2>
+          <button
+            className="prediction-share-image-btn admin-prediction-share-btn admin-user-list-share-btn"
+            type="button"
+            disabled={sharingUserListImage || users.length === 0}
+            onClick={async () => {
+              if (!adminUserListImageRef.current || !users.length || sharingUserListImage) return;
+              setSharingUserListImage(true);
+              try {
+                const canvas = await html2canvas(adminUserListImageRef.current, {
+                  backgroundColor: '#ffffff',
+                  scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+                  useCORS: true,
+                  allowTaint: false,
+                  logging: false,
+                });
+                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error('Không thể tạo ảnh.');
+                const file = new File([blob], 'fam-times-danh-sach-member.png', { type: 'image/png' });
+                if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+                  await navigator.share({
+                    title: 'FAM - TIMES · Danh sách member',
+                    text: 'Danh sách member FAM - TIMES',
+                    files: [file],
+                  });
+                } else {
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = file.name;
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  URL.revokeObjectURL(url);
+                }
+              } catch (error: any) {
+                if (error?.name !== 'AbortError') alert('Không thể tạo ảnh danh sách thành viên. Vui lòng thử lại.');
+              } finally {
+                setSharingUserListImage(false);
+              }
+            }}
+          >
+            <span aria-hidden="true">↗</span>
+            {sharingUserListImage ? 'Đang tạo ảnh...' : 'Xuất / chia sẻ ảnh danh sách member'}
+          </button>
+          <div className="admin-user-list-image-capture" aria-hidden="true">
+            <div ref={adminUserListImageRef} className="admin-user-list-image-sheet">
+              <div className="admin-user-list-image-title">DANH SÁCH MEMBER TIMES</div>
+              <table>
+                <thead>
+                  <tr><th>STT</th><th>Zalo</th><th>Ingame</th></tr>
+                </thead>
+                <tbody>
+                  {users.map((u, index) => (
+                    <tr key={u.id} className={'member-image-row member-image-row-' + (Math.floor(index / 5) % 3)}>
+                      <td>{index + 1}</td>
+                      <td>{u.name}</td>
+                      <td>{u.nickname || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <form className="form two" onSubmit={addUser}>
             <input className="input" required placeholder="Tên" value={name} onChange={(e) => setName(e.target.value)} />
             <input className="input" placeholder="Nickname" value={nick} onChange={(e) => setNick(e.target.value)} />
